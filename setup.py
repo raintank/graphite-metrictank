@@ -2,13 +2,13 @@
 from setuptools import setup
 
 setup(
-    name='graphite-raintank',
+    name='graphite_raintank',
     version='0.1',
-    url='https://github.com/raintank/graphite-raintank',
+    url='https://github.com/raintank/graphite_raintank',
     license='apache2',
     author='Anthony Woods',
     author_email='awoods@raintank.io',
-    description=('Raintank backend plugin for graphite-api'),
+    description=('Raintank backend plugin for graphite_api'),
     long_description='',
     py_modules=('graphite_raintank',),
     zip_safe=False,
