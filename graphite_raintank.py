@@ -49,11 +49,11 @@ class RaintankLeafNode(LeafNode):
 
 
 class RaintankReader(object):
-    __slots__ = ('config', 'metric')
+    __slots__ = ('config', 'metrics')
 
-    def __init__(self, config, metric):
+    def __init__(self, config, metrics):
         self.config = config
-        self.metric = metric
+        self.metrics = metrics
 
     def get_intervals(self):
         return IntervalSet([Interval(0, time.time())])
@@ -84,17 +84,30 @@ class RaintankFinder(object):
         leaf_regex = self.compile_regex(query, False)
         #query Elasticsearch for paths
         matches = self.search_series(leaf_regex, query)
+        leafs = {}
+        branches = {}
         for metric in matches:
             if metric.is_leaf():
-                yield RaintankLeafNode(metric.name, RaintankReader(self.config, metric))
+                if metric.name in leafs:
+                    leafs[metric.name].append(metric)
+                else:
+                    leafs[metric.name] = [metric]
             else:
-                name = metric.name
-                while '.' in name:
-                    name = name.rsplit('.', 1)[0]
-                    if name not in seen_branches:
-                        seen_branches.add(name)
-                        if leaf_regex.match(name) is not None:
-                            yield BranchNode(name)
+                if metric.name in branches:
+                    branches[metric.name].append(metric)
+                else:
+                    branches[metric.name] = [metric]
+
+        for name, metrics in leafs.iteritems():    
+            yield RaintankLeafNode(name, RaintankReader(self.config, metrics))
+        for branchName, metrics in branches.iteritems():
+            name = branchName
+            while '.' in name:
+                name = name.rsplit('.', 1)[0]
+                if name not in seen_branches:
+                    seen_branches.add(name)
+                    if leaf_regex.match(name) is not None:
+                        yield BranchNode(name)
 
     def compile_regex(self, query, branch=False):
         # we turn graphite's custom glob-like thing into a regex, like so:
@@ -126,7 +139,7 @@ class RaintankFinder(object):
                     },
                     {
                         "term": {
-                           "public": True
+                           "org_id": -1
                         }
                     }
                 ]
@@ -157,21 +170,21 @@ class RaintankFinder(object):
         step = None
         node_ids = {}
         for node in nodes:
-            node_ids[node.reader.metric.id] = node.path
-            if step is None or node.reader.metric.interval < step:
-                step = node.reader.metric.interval
+            for metric in node.reader.metrics:
+                if step is None or metric.interval < step:
+                    step = metric.interval
 
         with statsd.timer("graphite-api.fetch.raintank_query.query_duration"):
             data = self.fetch_from_tank(nodes, start_time, end_time)
         series = {}
         delta = None
         with statsd.timer("graphite-api.fetch.unmarshal_raintank_resp.duration"):
-            for resp in data:
-                path = node_ids[resp['Target']]
+
+            for path, points in data.iteritems():
                 datapoints = []
                 next_time = start_time;
                 
-                max_pos = len(resp['Datapoints'])
+                max_pos = len(points)
 
                 if max_pos == 0:
                     for i in range(int((end_time - start_time) / step)):
@@ -182,7 +195,7 @@ class RaintankFinder(object):
                 pos = 0
 
                 if delta is None:
-                    delta = (resp['Datapoints'][0][1] % start_time) % step
+                    delta = (points[0][1] % start_time) % step
                     # ts[0] is always greater then start_time.
                     if delta == 0:
                         delta = step
@@ -194,9 +207,9 @@ class RaintankFinder(object):
                         next_time += step
                         continue
 
-                    ts = resp['Datapoints'][pos][1]
+                    ts = points[pos][1]
                     # read in the metric value.
-                    v = resp['Datapoints'][pos][0]
+                    v = points[pos][0]
 
                     # pad missing points with null.
                     while ts > (next_time + step):
@@ -218,9 +231,23 @@ class RaintankFinder(object):
 
     def fetch_from_tank(self, nodes, start_time, end_time):
         params = {"render": [], "from": start_time, "to": end_time}
+        pathMap = {}
         for node in nodes:
-            params['render'].append(node.reader.metric.id)
+            for metric in node.reader.metrics:
+                params['render'].append(metric.id)
+                pathMap[metric.id] = metric.name
+
         url = "%sget" % self.config['tank']['url']
         resp = requests.get(url, params=params)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
-        return resp.json()
+        dataMap = {}
+        for result in resp.json():
+            path = pathMap[result['Target']]
+            if path in dataMap:
+                #we need to merge the datapoints.
+                dataMap[path].extend(result['Datapoints'])
+                # sort by timestamp
+                dataMap[path].sort(key=lambda x: x[1])
+            else:
+                dataMap[path] = result['Datapoints']
+        return dataMap
