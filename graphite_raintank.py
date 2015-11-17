@@ -144,18 +144,7 @@ class RaintankFinder(object):
                 }
             }
         }
-
-        with statsd.timer("graphite-api.search_leaf.es_search.query_duration"):
-            ret = self.es.search(index="metric", doc_type="metric_index", body=leaf_search_body, size=500 )
-            leafs = {}
-            if len(ret["hits"]["hits"]) > 0:
-                for hit in ret["hits"]["hits"]:
-                    leaf = True
-                    source = hit['_source']
-                    if source['name'] not in leafs:
-                        leafs[source['name']] = []
-                    leafs[source['name']].append(RaintankMetric(source, leaf))
-            logger.debug('search_leaf', leafs=len(leafs))
+        leaf_query = json.dumps(leaf_search_body)
 
         branch_search_body = leaf_search_body
         branch_search_body["query"]["filtered"]["filter"]["bool"]["must"][0] = {"range": {"node_count": {"gt": part_len}}}
@@ -168,11 +157,26 @@ class RaintankFinder(object):
                 }
             }
         }
+        branch_query = json.dumps(branch_search_body)
+
+        search_body = '{"index": "metric", "type": "metric_index", "size": 500}' + "\n" + leaf_query +"\n"
+        search_body += '{"index": "metric", "type": "metric_index"}' + "\n" + branch_query + "\n"
+
         branches = []
-        with statsd.timer("graphite-api.search_branches.es_search.query_duration"):
-            ret = self.es.search(index="metric", doc_type="metric_index", body=branch_search_body)
-            if len(ret['aggregations']['branches']['buckets']) > 0:
-                for agg in ret['aggregations']['branches']['buckets']:
+        leafs = {}
+        with statsd.timer("graphite-api.search_series.es_search.query_duration"):
+            ret = self.es.msearch(index="metric", doc_type="metric_index", body=search_body)
+            
+            if len(ret['responses'][0]["hits"]["hits"]) > 0:
+                for hit in ret['responses'][0]["hits"]["hits"]:
+                    leaf = True
+                    source = hit['_source']
+                    if source['name'] not in leafs:
+                        leafs[source['name']] = []
+                    leafs[source['name']].append(RaintankMetric(source, leaf))
+
+            if len(ret['responses'][1]['aggregations']['branches']['buckets']) > 0:
+                for agg in ret['responses'][1]['aggregations']['branches']['buckets']:
                     branches.append("%s.%s" % (".".join(parts[:-2]), agg['key']))
 
         return dict(leafs=leafs, branches=branches)
