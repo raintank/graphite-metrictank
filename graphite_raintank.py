@@ -160,7 +160,7 @@ class RaintankFinder(object):
         branch_query = json.dumps(branch_search_body)
 
         search_body = '{"index": "metric", "type": "metric_index", "size": 500}' + "\n" + leaf_query +"\n"
-        search_body += '{"index": "metric", "type": "metric_index"}' + "\n" + branch_query + "\n"
+        search_body += '{"index": "metric", "type": "metric_index", "search_type": "count"}' + "\n" + branch_query + "\n"
 
         branches = []
         leafs = {}
