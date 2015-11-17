@@ -148,7 +148,6 @@ class RaintankFinder(object):
 
         branch_search_body = leaf_search_body
         branch_search_body["query"]["filtered"]["filter"]["bool"]["must"][0] = {"range": {"node_count": {"gt": part_len}}}
-        branch_search_body["size"] = 0
         branch_search_body["aggs"] = {
             "branches" : {
                 "terms": {
@@ -166,7 +165,6 @@ class RaintankFinder(object):
         leafs = {}
         with statsd.timer("graphite-api.search_series.es_search.query_duration"):
             ret = self.es.msearch(index="metric", doc_type="metric_index", body=search_body)
-            
             if len(ret['responses'][0]["hits"]["hits"]) > 0:
                 for hit in ret['responses'][0]["hits"]["hits"]:
                     leaf = True
