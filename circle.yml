@@ -1,0 +1,17 @@
+dependencies:
+  override:
+    - pkg/depends.sh
+    - pkg/build.sh
+general:
+  artifacts:
+    - pkg/artifacts
+test:
+  override:
+    - echo "Testing disabled"
+  post:
+    - pkg/package.sh
+deployment:
+  production:
+    branch: master
+    commands:
+      - pkg/deploy.sh
