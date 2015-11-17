@@ -1,0 +1,29 @@
+finders:
+- graphite_raintank.RaintankFinder
+functions:
+- graphite_api.functions.SeriesFunctions
+- graphite_api.functions.PieFunctions
+logging:
+  version: 1
+  handlers:
+    raw:
+      level: DEBUG
+      class: logging.StreamHandler
+      formatter: raw
+  loggers:
+    root:
+      handlers:
+        - raw
+      level: DEBUG
+      propagate: false
+    graphite_api:
+      handlers:
+        - raw
+      level: DEBUG
+raintank:
+  es:
+    url: http://localhost:9200/
+  tank:
+    url: http://localhost:6060/
+search_index: /srv/graphite/index
+time_zone: UTC
