@@ -8,6 +8,7 @@ from graphite_api.node import LeafNode, BranchNode
 from flask import g
 import structlog
 logger = structlog.get_logger('graphite_api')
+import json
 
 class NullStatsd():
     def __enter__(self):
@@ -30,9 +31,12 @@ except:
     statsd = NullStatsd()
 
 
+def is_pattern(s):
+    return '*' in s or '?' in s or '[' in s or '{' in s
+
 class RaintankMetric(object):
     __slots__ = ('id', 'org_id', 'name', 'metric', 'interval', 'tags',
-        'target_type', 'unit', 'lastUpdate', 'public', 'leaf')
+        'target_type', 'unit', 'lastUpdate', 'public', 'node_count', 'nodes', 'leaf')
 
     def __init__(self, source, leaf):
         self.leaf = leaf
@@ -81,90 +85,97 @@ class RaintankFinder(object):
 
     def find_nodes(self, query):
         seen_branches = set()
-        leaf_regex = self.compile_regex(query, False)
         #query Elasticsearch for paths
-        matches = self.search_series(leaf_regex, query)
-        leafs = {}
-        branches = {}
-        for metric in matches:
-            if metric.is_leaf():
-                if metric.name in leafs:
-                    leafs[metric.name].append(metric)
-                else:
-                    leafs[metric.name] = [metric]
-            else:
-                if metric.name in branches:
-                    branches[metric.name].append(metric)
-                else:
-                    branches[metric.name] = [metric]
+        matches = self.search_series(query)
 
-        for name, metrics in leafs.iteritems():    
+        for name, metrics in matches['leafs'].iteritems():    
             yield RaintankLeafNode(name, RaintankReader(self.config, metrics))
-        for branchName, metrics in branches.iteritems():
-            name = branchName
-            while '.' in name:
-                name = name.rsplit('.', 1)[0]
-                if name not in seen_branches:
-                    seen_branches.add(name)
-                    if leaf_regex.match(name) is not None:
-                        yield BranchNode(name)
+        for branchName in matches['branches']:
+            yield BranchNode(branchName)
 
-    def compile_regex(self, query, branch=False):
-        # we turn graphite's custom glob-like thing into a regex, like so:
-        # * becomes [^\.]*
-        # . becomes \.
-        if branch:
-            regex = '{0}.*'
-        else:
-            regex = '^{0}$'
+    def search_series(self, query):
+        parts = query.pattern.split(".")
+        part_len = len(parts)
+        es_query = {
+            "bool": {
+                "must": [
+                ]
+            }
+        }
+        pos = 0
+        for p in parts:
+            node = "nodes.n%d" % pos
+            value = p
+            q_type = "term"
+            if is_pattern(p):
+                q_type = "regexp"
+                value = p.replace('*', '.*').replace('{', '(').replace(',', '|').replace('}', ')')
 
-        regex = regex.format(
-            query.pattern.replace('.', '\.').replace('*', '[^\.]*').replace('{', '(').replace(',', '|').replace('}', ')')
-        )
-        logger.debug("compile_regex", pattern=query.pattern, regex=regex)
-        return re.compile(regex)
+            es_query['bool']['must'].append({q_type: {node: value}})
+            pos += 1
 
-    def search_series(self, leaf_regex, query):
-        branch_regex = self.compile_regex(query, True)
-
-        search_body = {
+        leaf_search_body = {
           "query": {
-            "filtered": {
-              "filter": {
-                "or": [
-                    {
-                        "term": {
-                            "org_id": g.org
+                "filtered": {
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                { 
+                                    "term" : {
+                                        "node_count": part_len
+                                    }
+                                }
+                            ],
+                            "should": [
+                                {
+                                    "term": {
+                                        "org_id": g.org
+                                    }
+                                },
+                                {
+                                    "term": {
+                                       "org_id": -1
+                                    }
+                                }
+                            ]
                         }
                     },
-                    {
-                        "term": {
-                           "org_id": -1
-                        }
-                    }
-                ]
-              },
-              "query": {
-                "regexp": {
-                "name": branch_regex.pattern
+                "query": es_query
                 }
-              }
             }
-          }
         }
 
-        with statsd.timer("graphite-api.search_series.es_search.query_duration"):
-            ret = self.es.search(index="metric", doc_type="metric_index", body=search_body, size=10000 )
-            matches = []
+        with statsd.timer("graphite-api.search_leaf.es_search.query_duration"):
+            ret = self.es.search(index="metric", doc_type="metric_index", body=leaf_search_body, size=500 )
+            leafs = {}
             if len(ret["hits"]["hits"]) > 0:
                 for hit in ret["hits"]["hits"]:
-                    leaf = False
+                    leaf = True
                     source = hit['_source']
-                    if leaf_regex.match(source['name']) is not None:
-                        leaf = True
-                    matches.append(RaintankMetric(source, leaf))
-            logger.debug('search_series', matches=len(matches))
-        return matches
+                    if source['name'] not in leafs:
+                        leafs[source['name']] = []
+                    leafs[source['name']].append(RaintankMetric(source, leaf))
+            logger.debug('search_leaf', leafs=len(leafs))
+
+        branch_search_body = leaf_search_body
+        branch_search_body["query"]["filtered"]["filter"]["bool"]["must"][0] = {"range": {"node_count": {"gt": part_len}}}
+        branch_search_body["size"] = 0
+        branch_search_body["aggs"] = {
+            "branches" : {
+                "terms": {
+                    "field": "nodes.n%d" % (part_len - 1),
+                    "size": 500
+                }
+            }
+        }
+        branches = []
+        with statsd.timer("graphite-api.search_branches.es_search.query_duration"):
+            ret = self.es.search(index="metric", doc_type="metric_index", body=branch_search_body)
+            if len(ret['aggregations']['branches']['buckets']) > 0:
+                for agg in ret['aggregations']['branches']['buckets']:
+                    branches.append("%s.%s" % (".".join(parts[:-2]), agg['key']))
+
+        return dict(leafs=leafs, branches=branches)
 
     def fetch_multi(self, nodes, start_time, end_time):
         step = None
