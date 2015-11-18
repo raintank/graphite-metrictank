@@ -37,6 +37,11 @@ chown $DAEMON_USER /var/log/graphite
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
+# export the GRAPHITE_API_CONFIG setting if present.
+if [ ! -z $GRAPHITE_API_CONFIG ]; then
+  export GRAPHITE_API_CONFIG
+fi
+
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
 
