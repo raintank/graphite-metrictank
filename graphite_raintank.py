@@ -243,11 +243,11 @@ class RaintankFinder(object):
         return time_info, series
 
     def fetch_from_tank(self, nodes, start_time, end_time):
-        params = {"render": [], "from": start_time, "to": end_time}
+        params = {"target": [], "from": start_time, "to": end_time}
         pathMap = {}
         for node in nodes:
             for metric in node.reader.metrics:
-                params['render'].append(metric.id)
+                params['target'].append(metric.id)
                 pathMap[metric.id] = metric.name
 
         url = "%sget" % self.config['tank']['url']
