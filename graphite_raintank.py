@@ -249,11 +249,11 @@ class RaintankFinder(object):
         pathMap = {}
         for node in nodes:
             for metric in node.reader.metrics:
+                target = metric.id
                 if node.consolidateBy is not None:
-                    params['target'].append("consolidateBy(%s,%s)" %(metric.id, node.consolidateBy))
-                else:
-                    params['target'].append(metric.id)
-                pathMap[metric.id] = metric.name
+                    target = "consolidateBy(%s,%s)" %(metric.id, node.consolidateBy)
+                params['target'].append(target)
+                pathMap[target] = metric.name
 
         url = "%sget" % self.config['tank']['url']
         resp = requests.get(url, params=params)
