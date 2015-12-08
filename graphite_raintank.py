@@ -257,7 +257,10 @@ class RaintankFinder(object):
                 pathMap[target] = metric.name
 
         url = "%sget" % self.config['tank']['url']
-        resp = requests.get(url, params=params)
+        headers = {
+                'User-Agent': 'graphite_raintank'
+        }
+        resp = requests.get(url, params=params, headers=headers)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
         dataMap = {}
         for result in resp.json():
