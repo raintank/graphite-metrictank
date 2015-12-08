@@ -244,8 +244,9 @@ class RaintankFinder(object):
 
     def fetch_from_tank(self, nodes, start_time, end_time):
         params = {"target": [], "from": start_time, "to": end_time}
-        if g.maxDataPoints:
-            params['maxDataPoints'] = g.maxDataPoints
+        maxDataPoints = g.get('maxDataPoints', None)
+        if maxDataPoints is not None:
+            params['maxDataPoints'] = maxDataPoints
         pathMap = {}
         for node in nodes:
             for metric in node.reader.metrics:
