@@ -244,11 +244,17 @@ class RaintankFinder(object):
 
     def fetch_from_tank(self, nodes, start_time, end_time):
         params = {"target": [], "from": start_time, "to": end_time}
+        maxDataPoints = g.get('maxDataPoints', None)
+        if maxDataPoints is not None:
+            params['maxDataPoints'] = maxDataPoints
         pathMap = {}
         for node in nodes:
             for metric in node.reader.metrics:
-                params['target'].append(metric.id)
-                pathMap[metric.id] = metric.name
+                target = metric.id
+                if node.consolidateBy is not None:
+                    target = "consolidateBy(%s,%s)" %(metric.id, node.consolidateBy)
+                params['target'].append(target)
+                pathMap[target] = metric.name
 
         url = "%sget" % self.config['tank']['url']
         resp = requests.get(url, params=params)
