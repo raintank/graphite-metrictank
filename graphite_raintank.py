@@ -116,6 +116,7 @@ class RaintankFinder(object):
             pos += 1
 
         leaf_search_body = {
+          "size": 500,
           "query": {
                 "filtered": {
                     "filter": {
@@ -159,7 +160,7 @@ class RaintankFinder(object):
         }
         branch_query = json.dumps(branch_search_body)
 
-        search_body = '{"index": "'+self.config['es']['index']+'", "type": "metric_index", "size": 500}' + "\n" + leaf_query +"\n"
+        search_body = '{"index": "'+self.config['es']['index']+'", "type": "metric_index"}' + "\n" + leaf_query +"\n"
         search_body += '{"index": "'+self.config['es']['index']+'", "type": "metric_index", "search_type": "count"}' + "\n" + branch_query + "\n"
 
         branches = []
