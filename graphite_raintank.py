@@ -77,7 +77,8 @@ class RaintankFinder(object):
                "url": rt.get('url', 'http://localhost:6060')
             },
             "es": {
-                "url": es.get('url', 'http://localhost:9200')
+                "url": es.get('url', 'http://localhost:9200'),
+                "index": es.get('index', "metric")
             }
         }
         logger.info("initialize RaintankFinder", config=self.config)
@@ -158,13 +159,13 @@ class RaintankFinder(object):
         }
         branch_query = json.dumps(branch_search_body)
 
-        search_body = '{"index": "metric", "type": "metric_index", "size": 500}' + "\n" + leaf_query +"\n"
-        search_body += '{"index": "metric", "type": "metric_index", "search_type": "count"}' + "\n" + branch_query + "\n"
+        search_body = '{"index": "'+self.config['es']['index']+'", "type": "metric_index", "size": 500}' + "\n" + leaf_query +"\n"
+        search_body += '{"index": "'+self.config['es']['index']+'", "type": "metric_index", "search_type": "count"}' + "\n" + branch_query + "\n"
 
         branches = []
         leafs = {}
         with statsd.timer("graphite-api.search_series.es_search.query_duration"):
-            ret = self.es.msearch(index="metric", doc_type="metric_index", body=search_body)
+            ret = self.es.msearch(index=self.config['es']['index'], doc_type="metric_index", body=search_body)
             if len(ret['responses'][0]["hits"]["hits"]) > 0:
                 for hit in ret['responses'][0]["hits"]["hits"]:
                     leaf = True

@@ -25,5 +25,6 @@ raintank:
     url: http://localhost:9200/
   tank:
     url: http://localhost:6060/
+    index: metric
 search_index: /srv/graphite/index
 time_zone: UTC
