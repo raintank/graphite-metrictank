@@ -182,66 +182,17 @@ class RaintankFinder(object):
         return dict(leafs=leafs, branches=branches)
 
     def fetch_multi(self, nodes, start_time, end_time):
-        step = None
-        node_ids = {}
-        for node in nodes:
-            for metric in node.reader.metrics:
-                if step is None or metric.interval < step:
-                    step = metric.interval
-
         with statsd.timer("graphite-api.fetch.raintank_query.query_duration"):
             data = self.fetch_from_tank(nodes, start_time, end_time)
         series = {}
-        delta = None
+        step = None
         with statsd.timer("graphite-api.fetch.unmarshal_raintank_resp.duration"):
+            for path, arr in data.iteritems():
+                series[path] = [p[0] for p in arr[1]]
+                if step is None or step < arr[0]:
+                    step = arr[0]
 
-            for path, points in data.iteritems():
-                datapoints = []
-                next_time = start_time;
-                
-                max_pos = len(points)
-
-                if max_pos == 0:
-                    for i in range(int((end_time - start_time) / step)):
-                        datapoints.append(None)
-                    series[path] = datapoints
-                    continue
-
-                pos = 0
-
-                if delta is None:
-                    delta = (points[0][1] % start_time) % step
-                    # ts[0] is always greater then start_time.
-                    if delta == 0:
-                        delta = step
-
-                while next_time <= end_time:
-                    # check if there are missing values from the end of the time window
-                    if pos >= max_pos:
-                        datapoints.append(None)
-                        next_time += step
-                        continue
-
-                    ts = points[pos][1]
-                    # read in the metric value.
-                    v = points[pos][0]
-
-                    # pad missing points with null.
-                    while ts > (next_time + step):
-                        datapoints.append(None)
-                        next_time += step
-
-                    datapoints.append(v)
-                    next_time += step
-                    pos += 1
-                    if (ts + step) > end_time:
-                        break
-
-                series[path] = datapoints
-
-        if delta is None:
-            delta = 1
-        time_info = (start_time + delta, end_time, step)
+        time_info = (start_time + 1, end_time, step)
         return time_info, series
 
     def fetch_from_tank(self, nodes, start_time, end_time):
@@ -269,9 +220,9 @@ class RaintankFinder(object):
             path = pathMap[result['Target']]
             if path in dataMap:
                 #we need to merge the datapoints.
-                dataMap[path].extend(result['Datapoints'])
+                dataMap[path][1].extend(result['Datapoints'])
                 # sort by timestamp
-                dataMap[path].sort(key=lambda x: x[1])
+                dataMap[path][1].sort(key=lambda x: x[1])
             else:
-                dataMap[path] = result['Datapoints']
+                dataMap[path] = [result['Interval'], result['Datapoints']]
         return dataMap
