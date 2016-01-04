@@ -192,7 +192,7 @@ class RaintankFinder(object):
                 if step is None or step < arr[0]:
                     step = arr[0]
 
-        time_info = (start_time + 1, end_time, step)
+        time_info = ((start_time +1) + ((start_time + 1) % step), end_time, step)
         return time_info, series
 
     def fetch_from_tank(self, nodes, start_time, end_time):
