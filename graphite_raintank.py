@@ -147,21 +147,21 @@ class RaintankFinder(object):
             }
         }
         leaf_query = json.dumps(leaf_search_body)
+        search_body = '{"index": "'+self.config['es']['index']+'", "type": "metric_index"}' + "\n" + leaf_query +"\n"
 
-        branch_search_body = leaf_search_body
-        branch_search_body["query"]["filtered"]["filter"]["bool"]["must"][0] = {"range": {"node_count": {"gt": part_len}}}
-        branch_search_body["aggs"] = {
-            "branches" : {
-                "terms": {
-                    "field": "nodes.n%d" % (part_len - 1),
-                    "size": 500
+        if not query.leaves_only:
+            branch_search_body = leaf_search_body
+            branch_search_body["query"]["filtered"]["filter"]["bool"]["must"][0] = {"range": {"node_count": {"gt": part_len}}}
+            branch_search_body["aggs"] = {
+                "branches" : {
+                    "terms": {
+                        "field": "nodes.n%d" % (part_len - 1),
+                        "size": 500
+                    }
                 }
             }
-        }
-        branch_query = json.dumps(branch_search_body)
-
-        search_body = '{"index": "'+self.config['es']['index']+'", "type": "metric_index"}' + "\n" + leaf_query +"\n"
-        search_body += '{"index": "'+self.config['es']['index']+'", "type": "metric_index", "search_type": "count"}' + "\n" + branch_query + "\n"
+            branch_query = json.dumps(branch_search_body)
+            search_body += '{"index": "'+self.config['es']['index']+'", "type": "metric_index", "search_type": "count"}' + "\n" + branch_query + "\n"
 
         branches = []
         leafs = {}
@@ -174,10 +174,10 @@ class RaintankFinder(object):
                     if source['name'] not in leafs:
                         leafs[source['name']] = []
                     leafs[source['name']].append(RaintankMetric(source, leaf))
-
-            if len(ret['responses'][1]['aggregations']['branches']['buckets']) > 0:
-                for agg in ret['responses'][1]['aggregations']['branches']['buckets']:
-                    branches.append("%s.%s" % (".".join(parts[:-2]), agg['key']))
+            if not query.leaves_only:
+                if len(ret['responses'][1]['aggregations']['branches']['buckets']) > 0:
+                    for agg in ret['responses'][1]['aggregations']['branches']['buckets']:
+                        branches.append("%s.%s" % (".".join(parts[:-2]), agg['key']))
 
         return dict(leafs=leafs, branches=branches)
 
