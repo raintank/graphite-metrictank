@@ -216,13 +216,38 @@ class RaintankFinder(object):
         resp = requests.get(url, params=params, headers=headers)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
         dataMap = {}
+        mergeSet = {}
         for result in resp.json():
             path = pathMap[result['Target']]
             if path in dataMap:
-                #we need to merge the datapoints.
-                dataMap[path][1].extend(result['Datapoints'])
-                # sort by timestamp
-                dataMap[path][1].sort(key=lambda x: x[1])
+                # flag the result as requiring merging
+                if path not in mergeSet:
+                    mergeSet[path] = [dataMap[path][1]]
+
+                mergeSet[path].append(result['Datapoints'])
+                
             else:
                 dataMap[path] = [result['Interval'], result['Datapoints']]
+
+        # we need to merge the datapoints.
+        # metric-tank already fills will NULLS. so all we need to do is
+        # scan all of the sets and use the first non null value, failing
+        # back to using null.  This code assumes that all datapoints sets
+        # returned from metric-tank have the same number of points (which they should)
+        if len(mergeSet) > 0:
+            for path, datapointList in mergeSet.iteritems():
+                merged = []
+                for i in range(0, len(datapointList[0])):
+                    pos = 0
+                    found = False
+                    while not found and pos < len(datapointList):
+                        if datapointList[pos][i][0] is not None:
+                            merged.append(datapointList[pos][i])
+                            found = True
+                        pos += 1
+                    if not found:
+                        merged.append([None, datapointList[pos-1][i][1]])
+                dataMap[path][1] = merged
+
         return dataMap
+
