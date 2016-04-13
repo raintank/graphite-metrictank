@@ -215,6 +215,10 @@ class RaintankFinder(object):
         }
         resp = requests.get(url, params=params, headers=headers)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
+        if resp.status_code == 400:
+            raise Exception("metric-tank said: %s" % resp.text)
+        if resp.status_code == 500:
+            raise Exception("metric-tank internal server error")
         dataMap = {}
         mergeSet = {}
         for result in resp.json():
