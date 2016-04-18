@@ -215,10 +215,16 @@ class RaintankFinder(object):
         }
         resp = requests.get(url, params=params, headers=headers)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
-        if resp.status_code == 400:
+        if resp.status_code >= 400 && resp.status_code < 500:
             raise Exception("metric-tank said: %s" % resp.text)
         if resp.status_code == 500:
             raise Exception("metric-tank internal server error")
+        if resp.status_code == 502:
+            raise Exception("metric-tank bad gateway")
+        if resp.status_code == 503:
+            raise Exception("metric-tank service unavailable")
+        if resp.status_code == 504:
+            raise Exception("metric-tank gateway timeout")
         dataMap = {}
         mergeSet = {}
         for result in resp.json():
