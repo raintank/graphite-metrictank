@@ -9,6 +9,7 @@ from flask import g
 import structlog
 logger = structlog.get_logger('graphite_api')
 import json
+import hashlib
 
 class NullStatsd():
     def __enter__(self):
@@ -23,12 +24,31 @@ class NullStatsd():
     def timing(self, key, val):
         pass
 
+    def incr(self, key, count=None, rate=None):
+        pass
+
 try:
     from graphite_api.app import app
     statsd = app.statsd
     assert statsd is not None
 except:
     statsd = NullStatsd()
+
+class NullCache():
+
+    def set(self, *args, **kwargs):
+        pass
+
+    def get(self, *args, **kwargs):
+        return None
+
+
+try:
+    from graphite_api.app import app
+    cache = app.cache
+    assert cache is not None
+except:
+    cache = NullCache()
 
 
 def is_pattern(s):
@@ -78,7 +98,8 @@ class RaintankFinder(object):
             },
             "es": {
                 "url": es.get('url', 'http://localhost:9200'),
-                "index": es.get('index', "metric")
+                "index": es.get('index', "metric"),
+                "cache_ttl": es.get("cache_ttl", 60)
             }
         }
         logger.info("initialize RaintankFinder", config=self.config)
@@ -165,20 +186,32 @@ class RaintankFinder(object):
 
         branches = []
         leafs = {}
-        with statsd.timer("graphite-api.search_series.es_search.query_duration"):
-            ret = self.es.msearch(index=self.config['es']['index'], doc_type="metric_index", body=search_body)
-            if len(ret['responses'][0]["hits"]["hits"]) > 0:
-                for hit in ret['responses'][0]["hits"]["hits"]:
-                    leaf = True
-                    source = hit['_source']
-                    if source['name'] not in leafs:
-                        leafs[source['name']] = []
-                    leafs[source['name']].append(RaintankMetric(source, leaf))
-            if not query.leaves_only:
-                if len(ret['responses'][1]['aggregations']['branches']['buckets']) > 0:
-                    for agg in ret['responses'][1]['aggregations']['branches']['buckets']:
-                        branches.append("%s.%s" % (".".join(parts[:-2]), agg['key']))
 
+        cacheKey = "%d.%s" % (g.org, hashlib.md5(search_body).hexdigest())
+        cached = cache.get(cacheKey)
+        if cached is not None:
+            logger.debug("es_search cache", cache="hit", key=cacheKey)
+            statsd.incr("graphite-api.search_series.es_search.cache_hit")
+            ret = cached
+        else:
+            logger.debug("es_search cache", cache="miss", key=cacheKey)
+            statsd.incr("graphite-api.search_series.es_search.cache_miss")
+            with statsd.timer("graphite-api.search_series.es_search.query_duration"):
+                ret = self.es.msearch(index=self.config['es']['index'], doc_type="metric_index", body=search_body)
+                cache.set(cacheKey, ret, timeout=self.config['es']['cache_ttl'])
+
+        if len(ret['responses'][0]["hits"]["hits"]) > 0:
+            for hit in ret['responses'][0]["hits"]["hits"]:
+                leaf = True
+                source = hit['_source']
+                if source['name'] not in leafs:
+                    leafs[source['name']] = []
+                leafs[source['name']].append(RaintankMetric(source, leaf))
+        if not query.leaves_only:
+            if len(ret['responses'][1]['aggregations']['branches']['buckets']) > 0:
+                for agg in ret['responses'][1]['aggregations']['branches']['buckets']:
+                    branches.append("%s.%s" % (".".join(parts[:-2]), agg['key']))
+        
         return dict(leafs=leafs, branches=branches)
 
     def fetch_multi(self, nodes, start_time, end_time):

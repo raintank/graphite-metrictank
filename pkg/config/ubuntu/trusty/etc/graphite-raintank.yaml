@@ -23,8 +23,9 @@ logging:
 raintank:
   es:
     url: http://localhost:9200/
+    index: metric
+    cache_ttl: 60
   tank:
     url: http://localhost:6060/
-    index: metric
 search_index: /srv/graphite/index
 time_zone: UTC

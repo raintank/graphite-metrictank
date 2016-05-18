@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='graphite_raintank',
-    version='0.2',
+    version='0.3',
     url='https://github.com/raintank/graphite_raintank',
     license='apache2',
     author='Anthony Woods',

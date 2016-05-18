@@ -6,17 +6,12 @@ cd ${DIR}
 
 : ${NAME:="graphite-raintank"}
 : ${BUILD_DIR:="${DIR}/build"}
-VERSION="1.0.1"
+VERSION="$(git describe --long)"
 ARCH="$(uname -m)"
-PACKAGE_NAME="${DIR}/artifacts/NAME-VERSION-ITERATION_ARCH.deb"
-ITERATION=`date +%s`
-TAG="pkg-${VERSION}-${ITERATION}"
-
-git tag $TAG
+PACKAGE_NAME="${DIR}/artifacts/${NAME}-${VERSION}_${ARCH}.deb"
 
 fpm \
   -t deb -s dir -C ${BUILD_DIR} -n ${NAME} -v $VERSION \
-  --iteration ${ITERATION} \
   --deb-default ${DIR}/config/ubuntu/trusty/etc/default/graphite-raintank \
   --deb-init ${DIR}/config/ubuntu/trusty/etc/init.d/graphite-raintank \
   --config-files /etc/graphite-raintank.yaml \
