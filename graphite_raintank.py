@@ -10,6 +10,7 @@ import structlog
 logger = structlog.get_logger('graphite_api')
 import json
 import hashlib
+import platform
 
 class NullStatsd():
     def __enter__(self):
@@ -50,6 +51,7 @@ try:
 except:
     cache = NullCache()
 
+hostname = platform.node()
 
 def is_pattern(s):
     return '*' in s or '?' in s or '[' in s or '{' in s
@@ -191,12 +193,12 @@ class RaintankFinder(object):
         cached = cache.get(cacheKey)
         if cached is not None:
             logger.debug("es_search cache", cache="hit", key=cacheKey)
-            statsd.incr("graphite-api.search_series.es_search.cache_hit")
+            statsd.incr("graphite-api.%s.search_series.es_search.cache_hit" % hostname)
             ret = cached
         else:
             logger.debug("es_search cache", cache="miss", key=cacheKey)
-            statsd.incr("graphite-api.search_series.es_search.cache_miss")
-            with statsd.timer("graphite-api.search_series.es_search.query_duration"):
+            statsd.incr("graphite-api.%s.search_series.es_search.cache_miss" % hostname)
+            with statsd.timer("graphite-api.%s.search_series.es_search.query_duration" % hostname):
                 ret = self.es.msearch(index=self.config['es']['index'], doc_type="metric_index", body=search_body)
                 cache.set(cacheKey, ret, timeout=self.config['es']['cache_ttl'])
 
@@ -215,15 +217,13 @@ class RaintankFinder(object):
         return dict(leafs=leafs, branches=branches)
 
     def fetch_multi(self, nodes, start_time, end_time):
-        with statsd.timer("graphite-api.fetch.raintank_query.query_duration"):
-            data = self.fetch_from_tank(nodes, start_time, end_time)
+        data = self.fetch_from_tank(nodes, start_time, end_time)
         series = {}
         step = None
-        with statsd.timer("graphite-api.fetch.unmarshal_raintank_resp.duration"):
-            for path, arr in data.iteritems():
-                series[path] = [p[0] for p in arr[1]]
-                if step is None or step < arr[0]:
-                    step = arr[0]
+        for path, arr in data.iteritems():
+            series[path] = [p[0] for p in arr[1]]sf
+            if step is None or step < arr[0]:
+                step = arr[0]
 
         time_info = ((start_time +step) - ((start_time + step) % step), end_time, step)
         return time_info, series
@@ -246,7 +246,8 @@ class RaintankFinder(object):
         headers = {
                 'User-Agent': 'graphite_raintank'
         }
-        resp = requests.get(url, params=params, headers=headers)
+        with statsd.timer("graphite-api.%s.fetch.raintank_query.query_duration" % hostname):
+            resp = requests.get(url, params=params, headers=headers)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
         if resp.status_code >= 400 and resp.status_code < 500:
             raise Exception("metric-tank said: %s" % resp.text)
@@ -260,37 +261,38 @@ class RaintankFinder(object):
             raise Exception("metric-tank gateway timeout")
         dataMap = {}
         mergeSet = {}
-        for result in resp.json():
-            path = pathMap[result['Target']]
-            if path in dataMap:
-                # flag the result as requiring merging
-                if path not in mergeSet:
-                    mergeSet[path] = [dataMap[path][1]]
+        with statsd.timer("graphite-api.%s.fetch.unmarshal_raintank_resp.duration" % hostname):
+            for result in resp.json():
+                path = pathMap[result['Target']]
+                if path in dataMap:
+                    # flag the result as requiring merging
+                    if path not in mergeSet:
+                        mergeSet[path] = [dataMap[path][1]]
 
-                mergeSet[path].append(result['Datapoints'])
-                
-            else:
-                dataMap[path] = [result['Interval'], result['Datapoints']]
+                    mergeSet[path].append(result['Datapoints'])
+                    
+                else:
+                    dataMap[path] = [result['Interval'], result['Datapoints']]
 
-        # we need to merge the datapoints.
-        # metric-tank already fills will NULLS. so all we need to do is
-        # scan all of the sets and use the first non null value, failing
-        # back to using null.  This code assumes that all datapoints sets
-        # returned from metric-tank have the same number of points (which they should)
-        if len(mergeSet) > 0:
-            for path, datapointList in mergeSet.iteritems():
-                merged = []
-                for i in range(0, len(datapointList[0])):
-                    pos = 0
-                    found = False
-                    while not found and pos < len(datapointList):
-                        if datapointList[pos][i][0] is not None:
-                            merged.append(datapointList[pos][i])
-                            found = True
-                        pos += 1
-                    if not found:
-                        merged.append([None, datapointList[pos-1][i][1]])
-                dataMap[path][1] = merged
+            # we need to merge the datapoints.
+            # metric-tank already fills will NULLS. so all we need to do is
+            # scan all of the sets and use the first non null value, failing
+            # back to using null.  This code assumes that all datapoints sets
+            # returned from metric-tank have the same number of points (which they should)
+            if len(mergeSet) > 0:
+                for path, datapointList in mergeSet.iteritems():
+                    merged = []
+                    for i in range(0, len(datapointList[0])):
+                        pos = 0
+                        found = False
+                        while not found and pos < len(datapointList):
+                            if datapointList[pos][i][0] is not None:
+                                merged.append(datapointList[pos][i])
+                                found = True
+                            pos += 1
+                        if not found:
+                            merged.append([None, datapointList[pos-1][i][1]])
+                    dataMap[path][1] = merged
 
         return dataMap
 
