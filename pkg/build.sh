@@ -30,7 +30,7 @@ rm libpypy-c.so
 cp $DIR/tmp/pypy-5.1.1-linux64/bin/libpypy-c.so .
 cd $DIR
 
-${BUILD_DIR}/usr/share/python/graphite/bin/pip install -U pip distribute virtualenv-tools
+${BUILD_DIR}/usr/share/python/graphite/bin/pip install -U setuptools pip distribute virtualenv-tools
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip uninstall -y distribute
 
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-api.git@${API_BRANCH}
