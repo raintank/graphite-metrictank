@@ -12,11 +12,16 @@ cd ${DIR}
 : ${REPO_PREFIX:="git+https://github.com/raintank"}
 
 # remove any existing BUILD_DIR
-rm -rf ${BUILD_DIR}
+rm -rf ${BUILD_DIR} $DIR/tmp
+mkdir -p $DIR/tmp
+
+wget -O $DIR/tmp/pypy-5.1.1-linux64.tar.bz2 https://bitbucket.org/pypy/pypy/downloads/pypy-5.1.1-linux64.tar.bz2
+tar -C $DIR/tmp -jxf $DIR/tmp/pypy-5.1.1-linux64.tar.bz2 
 
 mkdir -p ${BUILD_DIR}/usr/share/python
 
-virtualenv ${BUILD_DIR}/usr/share/python/graphite
+virtualenv -p $DIR/tmp/pypy-5.1.1-linux64/bin/pypy ${BUILD_DIR}/usr/share/python/graphite
+
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install -U pip distribute
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip uninstall -y distribute
 
@@ -27,7 +32,6 @@ ${BUILD_DIR}/usr/share/python/graphite/bin/pip install eventlet
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install git+https://github.com/woodsaj/pystatsd.git
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install Flask-Cache
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install python-memcached
-${BUILD_DIR}/usr/share/python/graphite/bin/pip install blist
 
 find ${BUILD_DIR} ! -perm -a+r -exec chmod a+r {} \;
 
