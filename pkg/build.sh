@@ -10,10 +10,10 @@ cd ${DIR}
 : ${REPO_PREFIX:="git+https://github.com/raintank"}
 
 # remove any existing BUILD_DIR
-rm -rf ${BUILD_DIR} #$DIR/tmp
+rm -rf ${BUILD_DIR} $DIR/tmp
 mkdir -p $DIR/tmp
 
-#wget -O $DIR/tmp/pypy-5.1.1-linux64.tar.bz2 https://bitbucket.org/pypy/pypy/downloads/pypy-5.1.1-linux64.tar.bz2
+wget -O $DIR/tmp/pypy-5.1.1-linux64.tar.bz2 https://bitbucket.org/pypy/pypy/downloads/pypy-5.1.1-linux64.tar.bz2
 tar -C $DIR/tmp -jxf $DIR/tmp/pypy-5.1.1-linux64.tar.bz2 
 cd $DIR/tmp/pypy-5.1.1-linux64/bin/
 ln -s pypy python
