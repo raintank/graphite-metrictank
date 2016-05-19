@@ -40,6 +40,7 @@ ${BUILD_DIR}/usr/share/python/graphite/bin/pip install python-memcached
 
 find ${BUILD_DIR} ! -perm -a+r -exec chmod a+r {} \;
 
+mkdir -p ${BUILD_DIR}/usr/share/python/graphite/lib
 cd ${BUILD_DIR}/usr/share/python/graphite/lib
 ln -s ../lib-python/2.7 python2.7
 cd ..
