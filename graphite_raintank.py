@@ -221,7 +221,7 @@ class RaintankFinder(object):
         series = {}
         step = None
         for path, arr in data.iteritems():
-            series[path] = [p[0] for p in arr[1]]sf
+            series[path] = [p[0] for p in arr[1]]
             if step is None or step < arr[0]:
                 step = arr[0]
 
