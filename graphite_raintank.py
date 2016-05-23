@@ -247,7 +247,7 @@ class RaintankFinder(object):
                 'User-Agent': 'graphite_raintank'
         }
         with statsd.timer("graphite-api.%s.fetch.raintank_query.query_duration" % hostname):
-            resp = requests.get(url, params=params, headers=headers)
+            resp = requests.post(url, data=params, headers=headers)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
         if resp.status_code >= 400 and resp.status_code < 500:
             raise Exception("metric-tank said: %s" % resp.text)
