@@ -25,7 +25,7 @@ setup(
     ),
     install_requires=(
         'requests',
-        'elasticsearch<2.0.0',
+        'elasticsearch',
         'flask',
         'graphite_api'
     ),
