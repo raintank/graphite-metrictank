@@ -29,7 +29,7 @@ if ! test -d /srv/graphite ; then
 fi
 
 # Register service
-if [ -x "/etc/init.d/graphite-raintank" ]; then
-	update-rc.d graphite-raintank start 50 2 3 4 5 . stop 50 0 1 6 . >/dev/null
-	invoke-rc.d graphite-raintank start || exit $?
+if [ -x "/etc/init.d/graphite-metrictank" ]; then
+	update-rc.d graphite-metrictank start 50 2 3 4 5 . stop 50 0 1 6 . >/dev/null
+	invoke-rc.d graphite-metrictank start || exit $?
 fi

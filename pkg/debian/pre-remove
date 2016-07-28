@@ -4,6 +4,6 @@ set -e
 find /usr/share/python/graphite/lib -iname *.pyc -exec rm {} \;
 find /usr/share/python/graphite/lib -iname *.pyo -exec rm {} \;
 
-if [ -x "/etc/init.d/graphite-raintank" ]; then
-	invoke-rc.d graphite-raintank stop || exit $?
+if [ -x "/etc/init.d/graphite-metrictank" ]; then
+	invoke-rc.d graphite-metrictank stop || exit $?
 fi

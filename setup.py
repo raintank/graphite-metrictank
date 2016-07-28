@@ -2,15 +2,15 @@
 from setuptools import setup
 
 setup(
-    name='graphite_raintank',
-    version='0.3',
-    url='https://github.com/raintank/graphite_raintank',
+    name='graphite_metrictank',
+    version='0.4',
+    url='https://github.com/raintank/graphite_metrictank',
     license='apache2',
     author='Anthony Woods',
     author_email='awoods@raintank.io',
-    description=('Raintank backend plugin for graphite_api'),
+    description=('Metrictank backend plugin for graphite_api'),
     long_description='',
-    py_modules=('graphite_raintank',),
+    py_modules=('graphite_metrictank',),
     zip_safe=False,
     include_package_data=True,
     platforms='any',

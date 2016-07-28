@@ -32,7 +32,7 @@ ${BUILD_DIR}/usr/share/python/graphite/bin/pip uninstall -y distribute
 
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-api.git@${API_BRANCH}
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install graphite-api[sentry,cyanite] gunicorn==18.0
-${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-raintank.git@${CIRCLE_BRANCH}
+${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-metrictank.git@${CIRCLE_BRANCH}
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install eventlet
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install git+https://github.com/woodsaj/pystatsd.git
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install Flask-Cache
