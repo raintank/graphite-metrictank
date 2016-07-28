@@ -126,11 +126,16 @@ class RaintankFinder(object):
                 ]
             }
         }
+        litmus = False
         pos = 0
         for p in parts:
             node = "nodes.n%d" % pos
             value = p
             q_type = "term"
+            if pos == 0 and p == "litmus":
+                logger.debug("litmus query detected", query=query.pattern)
+                litmus = True
+                p = "worldping"
             if is_pattern(p):
                 q_type = "regexp"
                 value = p.replace('*', '.*').replace('{', '(').replace(',', '|').replace('}', ')')
@@ -206,13 +211,20 @@ class RaintankFinder(object):
             for hit in ret['responses'][0]["hits"]["hits"]:
                 leaf = True
                 source = hit['_source']
+                if litmus:
+                    logger.debug("translating worldping to litmus", source=source['name'])
+                    if source['name'].startswith("worldping"):
+                        source['name'].replace("worldping", "litmus", 1)
                 if source['name'] not in leafs:
                     leafs[source['name']] = []
+                logger.debug("leaf found", name=source['name'])
                 leafs[source['name']].append(RaintankMetric(source, leaf))
         if not query.leaves_only:
             if len(ret['responses'][1]['aggregations']['branches']['buckets']) > 0:
                 for agg in ret['responses'][1]['aggregations']['branches']['buckets']:
-                    branches.append("%s.%s" % (".".join(parts[:-2]), agg['key']))
+                    b = "%s.%s" % (".".join(parts[:-2]), agg['key'])
+                    logger.debug("branch found", branch=b)
+                    branches.append(b)
         
         return dict(leafs=leafs, branches=branches)
 
