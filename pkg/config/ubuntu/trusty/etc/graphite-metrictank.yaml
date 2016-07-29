@@ -1,5 +1,5 @@
 finders:
-- graphite_raintank.RaintankFinder
+- graphite_metrictank.RaintankFinder
 functions:
 - graphite_api.functions.SeriesFunctions
 - graphite_api.functions.PieFunctions
