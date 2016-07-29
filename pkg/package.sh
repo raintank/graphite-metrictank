@@ -12,8 +12,8 @@ PACKAGE_NAME="${DIR}/artifacts/${NAME}-${VERSION}_${ARCH}.deb"
 
 fpm \
   -t deb -s dir -C ${BUILD_DIR} -n ${NAME} -v $VERSION \
-  --deb-default ${DIR}/config/ubuntu/trusty/etc/default/graphite-metrictank \
-  --deb-init ${DIR}/config/ubuntu/trusty/etc/init.d/graphite-metrictank \
+  --deb-default ${DIR}/config/default/graphite-metrictank \
+  --deb-init ${DIR}/config/init.d/graphite-metrictank \
   --config-files /etc/graphite-metrictank.yaml \
   -d libcairo2 \
   -d "libffi5 | libffi6" \

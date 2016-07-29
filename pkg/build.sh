@@ -50,5 +50,5 @@ find ${BUILD_DIR} -iname *.pyc -exec rm {} \;
 find ${BUILD_DIR} -iname *.pyo -exec rm {} \;
 
 #mkdir -p ${BUILD_DIR}/etc
-cp -a ${DIR}/config/ubuntu/trusty/etc ${BUILD_DIR}/
+cp -a ${DIR}/config ${BUILD_DIR}/etc
 

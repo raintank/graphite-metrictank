@@ -9,4 +9,4 @@ if [ -z ${PACKAGECLOUD_REPO} ] ; then
 fi
 
 package_cloud push ${PACKAGECLOUD_REPO}/ubuntu/trusty ${DIR}/artifacts/*.deb
-
+package_cloud push ${PACKAGECLOUD_REPO}/ubuntu/xenial ${DIR}/artifacts/*.deb
