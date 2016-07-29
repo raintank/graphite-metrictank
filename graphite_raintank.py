@@ -132,10 +132,10 @@ class RaintankFinder(object):
             node = "nodes.n%d" % pos
             value = p
             q_type = "term"
-            if pos == 0 and p == "litmus":
+            if pos == 0 and value == "litmus":
                 logger.debug("litmus query detected", query=query.pattern)
                 litmus = True
-                p = "worldping"
+                value = "worldping"
             if is_pattern(p):
                 q_type = "regexp"
                 value = p.replace('*', '.*').replace('{', '(').replace(',', '|').replace('}', ')')
