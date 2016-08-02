@@ -21,6 +21,6 @@ fpm \
   --before-remove ${DIR}/debian/pre-remove \
   --after-remove ${DIR}/debian/post-remove \
   --url https://github.com/raintank/graphite-metrictank \
-  --description 'Graphite-web, without the interface. Just the rendering HTTP API. (raintank fork)' \
+  --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
   -p ${PACKAGE_NAME} usr etc
