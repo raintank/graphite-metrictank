@@ -28,8 +28,12 @@ $SUDO pip install virtualenv virtualenv-tools
 
 # remove any existing BUILD_DIR
 rm -rf ${BUILD_DIR}
-mkdir -p ${BUILD_DIR}
+mkdir -p ${BUILD_DIR}/var/lib/graphite
+mkdir -p ${BUILD_DIR}/var/log/graphite
 cp -a ${DIR}/$DISTRO/$VERSION/* ${BUILD_DIR}/
+mkdir -p ${BUILD_DIR}/etc/
+cp -a $DIR/common/default ${BUILD_DIR}/etc/
+cp -a $DIR/common/graphite-metrictank ${BUILD_DIR}/etc/
 mkdir -p ${BUILD_DIR}/usr/share/python
 
 virtualenv ${BUILD_DIR}/usr/share/python/graphite

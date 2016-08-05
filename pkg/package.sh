@@ -8,14 +8,6 @@ cd ${DIR}
 VERSION="$(git describe --long --always)"
 ARCH="$(uname -m)"
 
-## copy common files into rootfs/etc for each distro:version
-for target in debian:wheezy debian:jessie ubuntu:trusty ubuntu:xenial centos:6 centos7; do
-  _distro=${target%:*}
-  _version=${target#*:}
-  mkdir -p $DIR/$_distro/$_version/etc/
-  cp -a $DIR/common/* $DIR/build/$_distro/$_version/etc/
-done
-
 # wheezy, other sysvinit
 BUILD_ROOT=${DIR}/build
 BUILD="${BUILD_ROOT}/debian/wheezy"
@@ -25,7 +17,6 @@ PACKAGE_NAME="${PKG_DIR}/${NAME}-${VERSION}_${ARCH}.deb"
 
 fpm \
   -t deb -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
-  --deb-init ${BUILD}/etc/init.d/graphite-metrictank \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
   -d libcairo2 \
@@ -47,14 +38,10 @@ mkdir -p $PKG_DIR
 PACKAGE_NAME="${PKG_DIR}/${NAME}-${VERSION}_${ARCH}.deb"
 
 
-mkdir -p ${BUILD}/var/lib/graphite
-mkdir -p ${BUILD}/var/log/graphite
-
 fpm \
   -t deb -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
-  --deb-upstart ${BUILD}/etc/init/graphite-metrictank.conf \
   --after-install ${DIR}/ubuntu/scripts/post-install.sh \
   -d libcairo2 \
   -d python \
@@ -70,9 +57,6 @@ BUILD="${BUILD_ROOT}/ubuntu/xenial"
 PKG_DIR="${DIR}/build/pkg/ubuntu/xenial"
 mkdir -p $PKG_DIR
 PACKAGE_NAME="${PKG_DIR}/${NAME}-${VERSION}_${ARCH}.deb"
-
-mkdir -p ${BUILD}/var/lib/graphite
-mkdir -p ${BUILD}/var/log/graphite
 
 fpm \
   -t deb -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
@@ -94,9 +78,6 @@ PKG_DIR="${DIR}/build/pkg/debian/jessie"
 mkdir -p $PKG_DIR
 PACKAGE_NAME="${PKG_DIR}/${NAME}-${VERSION}_${ARCH}.deb"
 
-mkdir -p ${BUILD}/var/lib/graphite
-mkdir -p ${BUILD}/var/log/graphite
-
 fpm \
   -t deb -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
   --config-files /etc/graphite-metrictank/ \
@@ -117,14 +98,10 @@ PKG_DIR="${DIR}/build/pkg/centos/6"
 mkdir -p $PKG_DIR
 PACKAGE_NAME="${PKG_DIR}/${NAME}-${VERSION}.el6.${ARCH}.rpm"
 
-mkdir -p ${BUILD}/var/lib/graphite
-mkdir -p ${BUILD}/var/log/graphite
-
 fpm \
   -t rpm -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
-  --deb-upstart ${BUILD}/etc/init/graphite-metrictank.conf \
   --after-install ${DIR}/centos/scripts/post-install.sh \
   -d cairo \
   -d libffi \
@@ -139,8 +116,6 @@ BUILD="${BUILD_ROOT}/centos/7"
 PKG_DIR="${DIR}/build/pkg/centos/7"
 mkdir -p $PKG_DIR
 PACKAGE_NAME="${PKG_DIR}/${NAME}-${VERSION}.el7.${ARCH}.rpm"
-mkdir -p ${BUILD}/var/lib/graphite
-mkdir -p ${BUILD}/var/log/graphite
 
 fpm \
   -t rpm -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
