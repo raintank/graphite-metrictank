@@ -21,7 +21,8 @@ if [ $DISTRO == "ubuntu" ] || [ $DISTRO == "debian" ]; then
 	$SUDO apt-get update
 	$SUDO apt-get -y install python python-pip build-essential python-dev libffi-dev libcairo2-dev git
 else
-	$SUDO yum -y install python python-devel gcc gcc-c++ make openssl-devel libffi-devel cairo-devel git
+	$SUDO yum -y install python-setuptools python-devel gcc gcc-c++ make openssl-devel libffi-devel cairo-devel git
+	$SUDO easy_install pip
 fi
 $SUDO pip install virtualenv virtualenv-tools
 
