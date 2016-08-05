@@ -31,9 +31,9 @@ fpm \
   -d libcairo2 \
   -d python \
   -d "libffi5 | libffi6" \
-  --after-install ${BUILD_ROOT}/debian/scripts/post-install \
-  --before-remove ${BUILD_ROOT}/debian/scripts/pre-remove \
-  --after-remove ${BUILD_ROOT}/debian/scripts/post-remove \
+  --after-install ${DIR}/debian/scripts/post-install \
+  --before-remove ${DIR}/debian/scripts/pre-remove \
+  --after-remove ${DIR}/debian/scripts/post-remove \
   --url https://github.com/raintank/graphite-metrictank \
   --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
@@ -55,7 +55,7 @@ fpm \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
   --deb-upstart ${BUILD}/etc/init/graphite-metrictank.conf \
-  --after-install ${BUILD_ROOT}/ubuntu/scripts/post-install.sh \
+  --after-install ${DIR}/ubuntu/scripts/post-install.sh \
   -d libcairo2 \
   -d python \
   -d "libffi5 | libffi6" \
@@ -78,7 +78,7 @@ fpm \
   -t deb -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
-  --after-install ${BUILD_ROOT}/ubuntu/scripts/post-install.sh \
+  --after-install ${DIR}/ubuntu/scripts/post-install.sh \
   -d libcairo2 \
   -d python \
   -d "libffi5 | libffi6" \
@@ -101,7 +101,7 @@ fpm \
   -t deb -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
-  --after-install ${BUILD_ROOT}/ubuntu/scripts/post-install.sh \
+  --after-install ${DIR}/ubuntu/scripts/post-install.sh \
   -d libcairo2 \
   -d python \
   -d "libffi5 | libffi6" \
@@ -125,7 +125,7 @@ fpm \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
   --deb-upstart ${BUILD}/etc/init/graphite-metrictank.conf \
-  --after-install ${BUILD_ROOT}/centos/scripts/post-install.sh \
+  --after-install ${DIR}/centos/scripts/post-install.sh \
   -d cairo \
   -d libffi \
   --url https://github.com/raintank/graphite-metrictank \
@@ -146,7 +146,7 @@ fpm \
   -t rpm -s dir -C ${BUILD} -n ${NAME} -v $VERSION \
   --config-files /etc/graphite-metrictank/ \
   --config-files /etc/default/graphite-metrictank \
-  --after-install ${BUILD_ROOT}/centos/scripts/post-install.sh \
+  --after-install ${DIR}/centos/scripts/post-install.sh \
   -d cairo \
   -d libffi \
   --url https://github.com/raintank/graphite-metrictank \
