@@ -111,7 +111,6 @@ fpm \
   -p ${PACKAGE_NAME} .
 
 # centos 7
-exit
 BUILD="${BUILD_ROOT}/centos/7"
 PKG_DIR="${DIR}/build/pkg/centos/7"
 mkdir -p $PKG_DIR
