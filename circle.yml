@@ -8,7 +8,7 @@ dependencies:
     - pkg/build_docker.sh
 general:
   artifacts:
-    - pkg/artifacts
+    - pkg/build/pkg
 test:
   override:
     - echo "Testing disabled"
