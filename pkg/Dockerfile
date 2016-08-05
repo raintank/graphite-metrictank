@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y libcairo2 libffi6 python
 RUN mkdir -p /etc/graphite-metrictank
 
 COPY docker/gunicorn_conf.py /etc/graphite-metrictank
-COPY config/common/graphite-metrictank/graphite-metrictank.yaml /etc/graphite-metrictank/graphite-metrictank.yaml
+COPY common/graphite-metrictank/graphite-metrictank.yaml /etc/graphite-metrictank/graphite-metrictank.yaml
 
 COPY build/ubuntu/xenial/usr /usr
 COPY docker/entrypoint.sh /usr/local/bin/
