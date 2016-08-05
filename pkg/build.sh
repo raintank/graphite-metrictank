@@ -15,7 +15,7 @@ SUDO=sudo
 if [ $(whoami) == "root" ]; then
 	SUDO=""
 fi
-exit 
+ 
 ## ensure we have build dependencies installed.
 if [ $DISTRO == "ubuntu" ] || [ $DISTRO == "debian" ]; then
 	$SUDO apt-get update
