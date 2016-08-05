@@ -6,6 +6,7 @@ dependencies:
     - sudo apt-get -y install rpm
     - pkg/depends.sh
     - pkg/build.sh
+    - pkg/build_docker.sh
 general:
   artifacts:
     - pkg/artifacts
@@ -19,3 +20,5 @@ deployment:
     branch: master
     commands:
       - pkg/deploy.sh
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - pkg/deploy_docker.sh
