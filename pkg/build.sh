@@ -1,13 +1,29 @@
 #!/bin/bash
-
+set -x
 # Find the directory we exist within
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd ${DIR}
 SOURCEDIR=${DIR}/..
-: ${BUILD_DIR:="${DIR}/build"}
-: ${API_BRANCH:="master"}
-: ${CIRCLE_BRANCH:="master"}
-: ${REPO_PREFIX:="git+https://github.com/raintank"}
+
+DISTRO=${1:-ubuntu}
+VERSION=${2:-xenial}
+
+BUILD_DIR=${DIR}/build/$DISTRO/$VERSION
+REPO_PREFIX=${REPO_PREFIX:-git+https://github.com/raintank}
+
+SUDO=sudo
+if [ $(whoami) == "root" ]; then
+	SUDO=""
+fi
+exit 
+## ensure we have build dependencies installed.
+if [ $DISTRO == "ubuntu" ] || [ $DISTRO == "debian" ]; then
+	$SUDO apt-get update
+	$SUDO apt-get -y install python python-pip build-essential python-dev libffi-dev libcairo2-dev git
+else
+	$SUDO yum -y install python python-devel gcc gcc-c++ make openssl-devel libffi-devel cairo-devel git
+fi
+$SUDO pip install virtualenv virtualenv-tools
 
 # remove any existing BUILD_DIR
 rm -rf ${BUILD_DIR}
@@ -15,10 +31,8 @@ rm -rf ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}/usr/share/python
 
 virtualenv ${BUILD_DIR}/usr/share/python/graphite
-${BUILD_DIR}/usr/share/python/graphite/bin/pip install -U pip distribute
-${BUILD_DIR}/usr/share/python/graphite/bin/pip uninstall -y distribute
 
-${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-api.git@${API_BRANCH}
+${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-api.git
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install gunicorn==18.0
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${SOURCEDIR}
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install eventlet
@@ -32,6 +46,4 @@ find ${BUILD_DIR} ! -perm -a+r -exec chmod a+r {} \;
 cd ${BUILD_DIR}/usr/share/python/graphite
 virtualenv-tools --update-path /usr/share/python/graphite
 
-#mkdir -p ${BUILD_DIR}/etc
-cp -a ${DIR}/config/common ${BUILD_DIR}/common
 
