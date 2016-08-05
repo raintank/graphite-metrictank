@@ -1,0 +1,19 @@
+[Unit]
+Description=finder plugin to use metrictank with graphite-api
+ 
+[Service]
+Type=simple
+User=root
+Group=root
+# To override the NUMWORKERS environment variable below, create a directory at
+# /lib/systemd/system/grafana-metrictank.service.d, create a drop-in file called
+# something like "10-numworkers.conf", and set a new NUMWORKERS value like so:
+# [Service]
+# Environment="NUMWORKERS=4"
+Environment="NUMWORKERS=2"
+Environment="GRAPHITE_API_CONFIG=/etc/graphite-metrictank.yaml"
+ExecStart=/usr/share/python/graphite/bin/python "/usr/share/python/graphite/bin/gunicorn" "graphite_api.app:app" "-b" "0.0.0.0:8888" "-k" "eventlet" "-w" "$NUMWORKERS" "--log-file" "/var/log/graphite/graphite-metrictank.log"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
