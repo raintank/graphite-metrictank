@@ -1,5 +1,9 @@
+machine:
+  services:
+    - docker
 dependencies:
   override:
+    - sudo apt-get -y install rpm
     - pkg/depends.sh
     - pkg/build.sh
 general:
