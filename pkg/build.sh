@@ -27,7 +27,7 @@ $SUDO pip install virtualenv virtualenv-tools
 
 # remove any existing BUILD_DIR
 rm -rf ${BUILD_DIR}
-cp -a ${DIR}/$DISTRO/$VERSION ${BUILD_DIR}/
+cp -a ${DIR}/$DISTRO/$VERSION ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}/usr/share/python
 
 virtualenv ${BUILD_DIR}/usr/share/python/graphite
