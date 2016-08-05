@@ -14,16 +14,11 @@
 # Do NOT "set -e"
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
-NUMCORES=`/usr/bin/nproc`
-NUMWORKERS=$(($NUMCORES / 2))
-if [ $NUMWORKERS -lt 2 ]; then
-	NUMWORKERS=2
-fi
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 DESC="Graphite-API"
 NAME=graphite-metrictank
 DAEMON=/usr/share/python/graphite/bin/gunicorn
-DAEMON_ARGS="graphite_api.app:app -b 0.0.0.0:8888 -k eventlet -w $NUMWORKERS --log-file /var/log/graphite/graphite-metrictank.log"
+DAEMON_ARGS="graphite_api.app:app -c /etc/graphite-metrictank/gunicorn_conf.py"
 DAEMON_USER=graphite
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME

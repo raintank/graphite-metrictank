@@ -13,25 +13,25 @@ cd ${DIR}
 rm -rf ${BUILD_DIR} $DIR/tmp
 mkdir -p $DIR/tmp
 
-wget -O $DIR/tmp/pypy-5.1.1-linux64.tar.bz2 https://bitbucket.org/pypy/pypy/downloads/pypy-5.1.1-linux64.tar.bz2
-tar -C $DIR/tmp -jxf $DIR/tmp/pypy-5.1.1-linux64.tar.bz2 
-cd $DIR/tmp/pypy-5.1.1-linux64/bin/
+wget -O $DIR/tmp/pypy2-v5.3.1-linux64.tar.bz2 https://bitbucket.org/pypy/pypy/downloads/pypy2-v5.3.1-linux64.tar.bz2
+tar -C $DIR/tmp -jxf $DIR/tmp/pypy2-v5.3.1-linux64.tar.bz2
+cd $DIR/tmp/pypy2-v5.3.1-linux64/bin/
 ln -s pypy python
 cd $DIR
 mkdir -p ${BUILD_DIR}/usr/share/python
 
-virtualenv --always-copy -p $DIR/tmp/pypy-5.1.1-linux64/bin/python ${BUILD_DIR}/usr/share/python/graphite
-rsync -avhu $DIR/tmp/pypy-5.1.1-linux64/ $BUILD_DIR/usr/share/python/graphite/
+virtualenv --always-copy -p $DIR/tmp/pypy2-v5.3.1-linux64/bin/python ${BUILD_DIR}/usr/share/python/graphite
+rsync -avhu $DIR/tmp/pypy2-v5.3.1-linux64/ $BUILD_DIR/usr/share/python/graphite/
 cd ${BUILD_DIR}/usr/share/python/graphite/bin
 rm libpypy-c.so
-cp $DIR/tmp/pypy-5.1.1-linux64/bin/libpypy-c.so .
+cp $DIR/tmp/pypy2-v5.3.1-linux64/bin/libpypy-c.so .
 cd $DIR
 
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install -U setuptools pip distribute virtualenv-tools
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip uninstall -y distribute
 
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-api.git@${API_BRANCH}
-${BUILD_DIR}/usr/share/python/graphite/bin/pip install graphite-api[sentry,cyanite] gunicorn==18.0
+${BUILD_DIR}/usr/share/python/graphite/bin/pip install gunicorn==18.0
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-metrictank.git@${CIRCLE_BRANCH}
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install eventlet
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install git+https://github.com/woodsaj/pystatsd.git
@@ -45,10 +45,12 @@ cd ${BUILD_DIR}/usr/share/python/graphite/lib
 ln -s ../lib-python/2.7 python2.7
 cd ..
 ${BUILD_DIR}/usr/share/python/graphite/bin/virtualenv-tools --update-path /usr/share/python/graphite
+#$BUILD_DIR/usr/share/python/graphite/bin/python -m compileall /usr/share/python/graphite/lib > /dev/null
+#$BUILD_DIR/usr/share/python/graphite/bin/python -O -m compileall /usr/share/python/graphite/lib > /dev/null
 
-find ${BUILD_DIR} -iname *.pyc -exec rm {} \;
-find ${BUILD_DIR} -iname *.pyo -exec rm {} \;
+#find ${BUILD_DIR} -iname *.pyc -exec rm {} \;
+#find ${BUILD_DIR} -iname *.pyo -exec rm {} \;
 
 #mkdir -p ${BUILD_DIR}/etc
-cp -a ${DIR}/config ${BUILD_DIR}/etc
+cp -a ${DIR}/config/common ${BUILD_DIR}/common
 
