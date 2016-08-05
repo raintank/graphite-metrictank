@@ -4,6 +4,8 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd ${DIR}
 SOURCEDIR=$(readlink -e ${DIR}/..)
 BUILDDIR=${DIR}/build
+mkdir -p $BUILDDIR
+
 build_target()
 {
 	DISTRO=$1
