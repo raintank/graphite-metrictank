@@ -6,4 +6,4 @@ cd ${DIR}
 
 mkdir -p artifacts
 bundle install
-pip install virtualenv-tools
+

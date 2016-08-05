@@ -3,9 +3,8 @@ machine:
     - docker
 dependencies:
   override:
-    - sudo apt-get -y install rpm
     - pkg/depends.sh
-    - pkg/build.sh
+    - pkg/build_all.sh
     - pkg/build_docker.sh
 general:
   artifacts:
