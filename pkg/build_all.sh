@@ -11,10 +11,9 @@ build_target()
 	docker run --rm -v $SOURCEDIR:/opt/graphite-raintank $DISTRO:$VERSION /opt/graphite-raintank/pkg/build.sh $DISTRO $VERSION
 }
 
-for target in debian:wheezy debian:jessie ubuntu:trusty ubuntu:xenial centos:6 centos7; do
+for target in debian:wheezy debian:jessie ubuntu:trusty ubuntu:xenial centos:6 centos:7; do
 	_distro=${target%:*}
     _version=${target#*:}
-    cp -a $_distro/$_version ${BUILDDIR}/
     build_target $_distro $_version
 done
 

@@ -9,7 +9,7 @@ VERSION="$(git describe --long --always)"
 ARCH="$(uname -m)"
 
 ## copy common files into rootfs/etc for each distro:version
-for for target in debian:wheezy; # debian:jessie ubuntu:trusty ubuntu:xenial centos:6 centos7; do
+for target in debian:wheezy debian:jessie ubuntu:trusty ubuntu:xenial centos:6 centos7; do
   _distro=${target%:*}
   _version=${target#*:}
   mkdir -p $DIR/$_distro/$_version/etc/
@@ -134,7 +134,7 @@ fpm \
   -p ${PACKAGE_NAME} .
 
 # centos 7
-
+exit
 BUILD="${BUILD_ROOT}/centos/7"
 PKG_DIR="${DIR}/build/pkg/centos/7"
 mkdir -p $PKG_DIR

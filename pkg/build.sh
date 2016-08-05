@@ -15,7 +15,7 @@ SUDO=sudo
 if [ $(whoami) == "root" ]; then
 	SUDO=""
 fi
- 
+
 ## ensure we have build dependencies installed.
 if [ $DISTRO == "ubuntu" ] || [ $DISTRO == "debian" ]; then
 	$SUDO apt-get update
@@ -27,7 +27,7 @@ $SUDO pip install virtualenv virtualenv-tools
 
 # remove any existing BUILD_DIR
 rm -rf ${BUILD_DIR}
-
+cp -a $DISTRO/$VERSION ${BUILD_DIR}/
 mkdir -p ${BUILD_DIR}/usr/share/python
 
 virtualenv ${BUILD_DIR}/usr/share/python/graphite
