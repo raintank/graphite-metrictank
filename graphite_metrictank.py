@@ -101,7 +101,8 @@ class RaintankFinder(object):
             "es": {
                 "url": es.get('url', 'http://localhost:9200'),
                 "index": es.get('index', "metric"),
-                "cache_ttl": es.get("cache_ttl", 60)
+                "cache_ttl": es.get("cache_ttl", 60),
+                "max_docs": es.get("max_docs", 500)
             }
         }
         logger.info("initialize RaintankFinder", config=self.config)
@@ -144,7 +145,7 @@ class RaintankFinder(object):
             pos += 1
 
         leaf_search_body = {
-          "size": 500,
+          "size": self.config['es']['max_docs'],
           "query": {
                 "filtered": {
                     "filter": {
@@ -184,7 +185,7 @@ class RaintankFinder(object):
                 "branches" : {
                     "terms": {
                         "field": "nodes.n%d" % (part_len - 1),
-                        "size": 500
+                        "size": 0
                     }
                 }
             }
@@ -206,6 +207,9 @@ class RaintankFinder(object):
             with statsd.timer("graphite-api.%s.search_series.es_search.query_duration" % hostname):
                 ret = self.es.msearch(index=self.config['es']['index'], doc_type="metric_index", body=search_body)
                 cache.set(cacheKey, ret, timeout=self.config['es']['cache_ttl'])
+
+        if ret['responses'][0]['hits']['total'] > self.config['es']['max_docs']:
+            raise Exception("Too many series. Refine your search or ask your admin to increase max_docs")
 
         if len(ret['responses'][0]["hits"]["hits"]) > 0:
             for hit in ret['responses'][0]["hits"]["hits"]:
