@@ -28,5 +28,5 @@ raintank:
     max_docs: 500
   tank:
     url: http://localhost:6060/
-search_index: /srv/graphite/index
+search_index: /var/lib/graphite/index
 time_zone: UTC
