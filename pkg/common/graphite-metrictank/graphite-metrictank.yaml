@@ -25,7 +25,7 @@ raintank:
     url: http://localhost:9200/
     index: metric
     cache_ttl: 60
-    max_docs: 500
+    max_docs: 10000
   tank:
     url: http://localhost:6060/
 search_index: /var/lib/graphite/index

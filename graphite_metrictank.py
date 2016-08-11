@@ -102,7 +102,7 @@ class RaintankFinder(object):
                 "url": es.get('url', 'http://localhost:9200'),
                 "index": es.get('index', "metric"),
                 "cache_ttl": es.get("cache_ttl", 60),
-                "max_docs": es.get("max_docs", 500)
+                "max_docs": es.get("max_docs", 10000)
             }
         }
         logger.info("initialize RaintankFinder", config=self.config)
