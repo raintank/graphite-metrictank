@@ -1,7 +1,6 @@
 import re
 import time
 import struct
-from elasticsearch import Elasticsearch
 import requests
 from graphite_api.intervals import Interval, IntervalSet
 from graphite_api.node import LeafNode, BranchNode
@@ -75,11 +74,8 @@ class RaintankLeafNode(LeafNode):
 
 
 class RaintankReader(object):
-    __slots__ = ('config', 'metrics')
-
-    def __init__(self, config, metrics):
-        self.config = config
-        self.metrics = metrics
+    def __init__(self):
+        pass
 
     def get_intervals(self):
         return IntervalSet([Interval(0, time.time())])
@@ -92,145 +88,56 @@ class RaintankFinder(object):
 
     def __init__(self, config):
         cfg = config.get('raintank', {})
-        es = cfg.get('es', {})
         rt = cfg.get('tank', {})
         self.config = {
             "tank": {
-               "url": rt.get('url', 'http://localhost:6060')
+               "url": rt.get('url', 'http://localhost:6060/')
             },
-            "es": {
-                "url": es.get('url', 'http://localhost:9200'),
-                "index": es.get('index', "metric"),
-                "cache_ttl": es.get("cache_ttl", 60),
-                "max_docs": es.get("max_docs", 10000)
-            }
+            "cache_ttl": rt.get("cache_ttl", 60),
         }
+        if not self.config["tank"]["url"].endswith("/"):
+            self.config["tank"]["url"] += "/"
+            
         logger.info("initialize RaintankFinder", config=self.config)
-        self.es = Elasticsearch([self.config['es']['url']])
 
     def find_nodes(self, query):
-        seen_branches = set()
-        #query Elasticsearch for paths
-        matches = self.search_series(query)
-
-        for name, metrics in matches['leafs'].iteritems():    
-            yield RaintankLeafNode(name, RaintankReader(self.config, metrics))
-        for branchName in matches['branches']:
-            yield BranchNode(branchName)
-
-    def search_series(self, query):
-        parts = query.pattern.split(".")
-        part_len = len(parts)
-        es_query = {
-            "bool": {
-                "must": [
-                ]
-            }
+        params = {
+            "query": query.pattern, 
+            "from": query.startTime, 
+            "until": query.endTime,
+            "format": "completer",
         }
-        litmus = False
-        pos = 0
-        for p in parts:
-            node = "nodes.n%d" % pos
-            value = p
-            q_type = "term"
-            if pos == 0 and value == "litmus":
-                logger.debug("litmus query detected", query=query.pattern)
-                litmus = True
-                value = "worldping"
-            if is_pattern(p):
-                q_type = "regexp"
-                value = p.replace('*', '.*').replace('{', '(').replace(',', '|').replace('}', ')')
-
-            es_query['bool']['must'].append({q_type: {node: value}})
-            pos += 1
-
-        leaf_search_body = {
-          "size": self.config['es']['max_docs'],
-          "query": {
-                "filtered": {
-                    "filter": {
-                        "bool": {
-                            "must": [
-                                { 
-                                    "term" : {
-                                        "node_count": part_len
-                                    }
-                                }
-                            ],
-                            "should": [
-                                {
-                                    "term": {
-                                        "org_id": g.org
-                                    }
-                                },
-                                {
-                                    "term": {
-                                       "org_id": -1
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                "query": es_query
-                }
-            }
+        headers = {
+                'User-Agent': 'graphite_raintank',
+                'X-Org-Id': "%d" % g.org,
         }
-        leaf_query = json.dumps(leaf_search_body)
-        search_body = '{"index": "'+self.config['es']['index']+'", "type": "metric_index"}' + "\n" + leaf_query +"\n"
+        url = "%smetrics/find" % self.config['tank']['url']
+        with statsd.timer("graphite-api.%s.find.query_duration" % hostname):
+            resp = requests.get(url, params=params, headers=headers)
 
-        if not query.leaves_only:
-            branch_search_body = leaf_search_body
-            branch_search_body["query"]["filtered"]["filter"]["bool"]["must"][0] = {"range": {"node_count": {"gt": part_len}}}
-            branch_search_body["aggs"] = {
-                "branches" : {
-                    "terms": {
-                        "field": "nodes.n%d" % (part_len - 1),
-                        "size": 0
-                    }
-                }
-            }
-            branch_query = json.dumps(branch_search_body)
-            search_body += '{"index": "'+self.config['es']['index']+'", "type": "metric_index", "search_type": "count"}' + "\n" + branch_query + "\n"
+        logger.debug('find_nodes', url=url, status_code=resp.status_code, body=resp.text)
 
-        branches = []
-        leafs = {}
+        if resp.status_code >= 400 and resp.status_code < 500:
+            raise Exception("bad request: %s" % resp.text)
+        if resp.status_code == 500:
+            raise Exception("metric-tank internal server error")
+        if resp.status_code == 502:
+            raise Exception("metric-tank bad gateway")
+        if resp.status_code == 503:
+            raise Exception("metric-tank service unavailable")
+        if resp.status_code == 504:
+            raise Exception("metric-tank gateway timeout")
 
-        cacheKey = "%d.%s" % (g.org, hashlib.md5(search_body).hexdigest())
-        cached = cache.get(cacheKey)
-        if cached is not None:
-            logger.debug("es_search cache", cache="hit", key=cacheKey)
-            statsd.incr("graphite-api.%s.search_series.es_search.cache_hit" % hostname)
-            ret = cached
-        else:
-            logger.debug("es_search cache", cache="miss", key=cacheKey)
-            statsd.incr("graphite-api.%s.search_series.es_search.cache_miss" % hostname)
-            with statsd.timer("graphite-api.%s.search_series.es_search.query_duration" % hostname):
-                ret = self.es.msearch(index=self.config['es']['index'], doc_type="metric_index", body=search_body)
-                cache.set(cacheKey, ret, timeout=self.config['es']['cache_ttl'])
+        data = resp.json()
+        if "metrics" not in data:
+            raise Exception("invalid response from metrictank.")
 
-        if ret['responses'][0]['hits']['total'] > self.config['es']['max_docs']:
-            raise Exception("Too many series. Refine your search or ask your admin to increase max_docs")
+        for metric in data["metrics"]:
+            if metric["is_leaf"] == "1":
+                yield RaintankLeafNode(metric["path"], RaintankReader())
+            else:
+                yield BranchNode(metric["path"])
 
-        if len(ret['responses'][0]["hits"]["hits"]) > 0:
-            for hit in ret['responses'][0]["hits"]["hits"]:
-                leaf = True
-                source = hit['_source']
-                if litmus:
-                    logger.debug("translating worldping to litmus", source=source['name'])
-                    if source['name'].startswith("worldping"):
-                        source['name'].replace("worldping", "litmus", 1)
-                if source['name'] not in leafs:
-                    leafs[source['name']] = []
-                logger.debug("leaf found", name=source['name'])
-                leafs[source['name']].append(RaintankMetric(source, leaf))
-        if not query.leaves_only:
-            if len(ret['responses'][1]['aggregations']['branches']['buckets']) > 0:
-                for agg in ret['responses'][1]['aggregations']['branches']['buckets']:
-                    b = "%s.%s" % (".".join(parts[:-2]), agg['key'])
-                    logger.debug("branch found", branch=b)
-                    branches.append(b)
-        
-        return dict(leafs=leafs, branches=branches)
 
     def fetch_multi(self, nodes, start_time, end_time):
         data = self.fetch_from_tank(nodes, start_time, end_time)
@@ -244,23 +151,22 @@ class RaintankFinder(object):
         time_info = ((start_time +step) - ((start_time + step) % step), end_time, step)
         return time_info, series
 
-    def fetch_from_tank(self, nodes, start_time, end_time):
+    def fetch_multi(self, nodes, start_time, end_time):
         params = {"target": [], "from": start_time, "to": end_time}
         maxDataPoints = g.get('maxDataPoints', None)
         if maxDataPoints is not None:
             params['maxDataPoints'] = maxDataPoints
         pathMap = {}
         for node in nodes:
-            for metric in node.reader.metrics:
-                target = metric.id
-                if node.consolidateBy is not None:
-                    target = "consolidateBy(%s,%s)" %(metric.id, node.consolidateBy)
-                params['target'].append(target)
-                pathMap[target] = metric.name
+            target = node.path
+            if node.consolidateBy is not None:
+                target = "consolidateBy(%s,%s)" %(node.path, node.consolidateBy)
+            params['target'].append(target)
 
-        url = "%sget" % self.config['tank']['url']
+        url = "%srender" % self.config['tank']['url']
         headers = {
-                'User-Agent': 'graphite_raintank'
+                'User-Agent': 'graphite_raintank',
+                'X-Org-Id': "%d" % g.org,
         }
         with statsd.timer("graphite-api.%s.fetch.raintank_query.query_duration" % hostname):
             resp = requests.post(url, data=params, headers=headers)
@@ -275,40 +181,22 @@ class RaintankFinder(object):
             raise Exception("metric-tank service unavailable")
         if resp.status_code == 504:
             raise Exception("metric-tank gateway timeout")
-        dataMap = {}
-        mergeSet = {}
+
+        series = {}
+        time_info = None
         with statsd.timer("graphite-api.%s.fetch.unmarshal_raintank_resp.duration" % hostname):
             for result in resp.json():
-                path = pathMap[result['Target']]
-                if path in dataMap:
-                    # flag the result as requiring merging
-                    if path not in mergeSet:
-                        mergeSet[path] = [dataMap[path][1]]
+                series[result["target"]] = [p[0] for p in result["datapoints"]]
+                if time_info is None:
+                    if len(result["datapoints"]) == 0:
+                        time_info = (start_time, end_time, end_time-start_time)
+                    else:
+                        first = result["datapoints"][0][1]
+                        last = result["datapoints"][-1][1]
+                        if len(result["datapoints"]) == 1:
+                            step = end_time-start_time
+                        else:
+                            step = result["datapoints"][1][1] - result["datapoints"][0][1]
+                        time_info = (first, last, step)
 
-                    mergeSet[path].append(result['Datapoints'])
-                    
-                else:
-                    dataMap[path] = [result['Interval'], result['Datapoints']]
-
-            # we need to merge the datapoints.
-            # metric-tank already fills will NULLS. so all we need to do is
-            # scan all of the sets and use the first non null value, failing
-            # back to using null.  This code assumes that all datapoints sets
-            # returned from metric-tank have the same number of points (which they should)
-            if len(mergeSet) > 0:
-                for path, datapointList in mergeSet.iteritems():
-                    merged = []
-                    for i in range(0, len(datapointList[0])):
-                        pos = 0
-                        found = False
-                        while not found and pos < len(datapointList):
-                            if datapointList[pos][i][0] is not None:
-                                merged.append(datapointList[pos][i])
-                                found = True
-                            pos += 1
-                        if not found:
-                            merged.append([None, datapointList[pos-1][i][1]])
-                    dataMap[path][1] = merged
-
-        return dataMap
-
+        return time_info, series
