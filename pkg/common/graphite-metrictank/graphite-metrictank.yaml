@@ -21,11 +21,7 @@ logging:
         - raw
       level: DEBUG
 raintank:
-  es:
-    url: http://localhost:9200/
-    index: metric
-    cache_ttl: 60
-    max_docs: 10000
+  cache_ttl: 60
   tank:
     url: http://localhost:6060/
 search_index: /var/lib/graphite/index
