@@ -74,8 +74,8 @@ class RaintankLeafNode(LeafNode):
 
 
 class RaintankReader(object):
-    def __init__(self):
-        pass
+    def __init__(self, path):
+        self.path = path
 
     def get_intervals(self):
         return IntervalSet([Interval(0, time.time())])
@@ -101,8 +101,12 @@ class RaintankFinder(object):
         logger.info("initialize RaintankFinder", config=self.config)
 
     def find_nodes(self, query):
+        pattern = query.pattern
+        if query.pattern.startswith("litmus"):
+            pattern = query.pattern.replace("litmus", "worldping", 1)
+
         params = {
-            "query": query.pattern, 
+            "query": pattern, 
             "from": query.startTime, 
             "until": query.endTime,
             "format": "completer",
@@ -134,9 +138,15 @@ class RaintankFinder(object):
 
         for metric in data["metrics"]:
             if metric["is_leaf"] == "1":
-                yield RaintankLeafNode(metric["path"], RaintankReader())
+                path = metric["path"]
+                if query.pattern != pattern:
+                    path = metric["path"].replace("worldping", "litmus", 1)
+                yield RaintankLeafNode(path, RaintankReader(metric["path"]))
             else:
-                yield BranchNode(metric["path"])
+                path = metric["path"]
+                if query.pattern != pattern:
+                    path = metric["path"].replace("worldping", "litmus", 1)
+                yield BranchNode(path)
 
 
     def fetch_multi(self, nodes, start_time, end_time):
@@ -157,11 +167,12 @@ class RaintankFinder(object):
         if maxDataPoints is not None:
             params['maxDataPoints'] = maxDataPoints
         pathMap = {}
-        for node in nodes:
-            target = node.path
+        for node in nodes:     
+            target = node.reader.path
             if node.consolidateBy is not None:
-                target = "consolidateBy(%s,%s)" %(node.path, node.consolidateBy)
+                target = "consolidateBy(%s,%s)" %(node.reader.path, node.consolidateBy)
             params['target'].append(target)
+            pathMap[target] = node.path
 
         url = "%srender" % self.config['tank']['url']
         headers = {
@@ -186,7 +197,8 @@ class RaintankFinder(object):
         time_info = None
         with statsd.timer("graphite-api.%s.fetch.unmarshal_raintank_resp.duration" % hostname):
             for result in resp.json():
-                series[result["target"]] = [p[0] for p in result["datapoints"]]
+                path = pathMap[result["target"]]
+                series[path] = [p[0] for p in result["datapoints"]]
                 if time_info is None:
                     if len(result["datapoints"]) == 0:
                         time_info = (start_time, end_time, end_time-start_time)
