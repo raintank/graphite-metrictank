@@ -97,7 +97,10 @@ class RaintankFinder(object):
         }
         if not self.config["tank"]["url"].endswith("/"):
             self.config["tank"]["url"] += "/"
-            
+
+        self.http_session = requests.Session()
+        self.http_session.headers.update({"User-Agent": "graphite_metrictank"})
+
         logger.info("initialize RaintankFinder", config=self.config)
 
     def find_nodes(self, query):
@@ -112,12 +115,11 @@ class RaintankFinder(object):
             "format": "completer",
         }
         headers = {
-                'User-Agent': 'graphite_raintank',
                 'X-Org-Id': "%d" % g.org,
         }
         url = "%smetrics/find" % self.config['tank']['url']
         with statsd.timer("graphite-api.%s.find.query_duration" % hostname):
-            resp = requests.get(url, params=params, headers=headers)
+            resp = self.http_session.get(url, params=params, headers=headers)
 
         logger.debug('find_nodes', url=url, status_code=resp.status_code, body=resp.text)
 
@@ -176,11 +178,10 @@ class RaintankFinder(object):
 
         url = "%srender" % self.config['tank']['url']
         headers = {
-                'User-Agent': 'graphite_raintank',
                 'X-Org-Id': "%d" % g.org,
         }
         with statsd.timer("graphite-api.%s.fetch.raintank_query.query_duration" % hostname):
-            resp = requests.post(url, data=params, headers=headers)
+            resp = self.http_session.post(url, data=params, headers=headers)
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
         if resp.status_code >= 400 and resp.status_code < 500:
             raise Exception("metric-tank said: %s" % resp.text)
