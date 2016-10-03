@@ -150,19 +150,6 @@ class RaintankFinder(object):
                     path = metric["path"].replace("worldping", "litmus", 1)
                 yield BranchNode(path)
 
-
-    def fetch_multi(self, nodes, start_time, end_time):
-        data = self.fetch_from_tank(nodes, start_time, end_time)
-        series = {}
-        step = None
-        for path, arr in data.iteritems():
-            series[path] = [p[0] for p in arr[1]]
-            if step is None or step < arr[0]:
-                step = arr[0]
-
-        time_info = ((start_time +step) - ((start_time + step) % step), end_time, step)
-        return time_info, series
-
     def fetch_multi(self, nodes, start_time, end_time):
         params = {"target": [], "from": start_time, "to": end_time}
         maxDataPoints = g.get('maxDataPoints', None)
