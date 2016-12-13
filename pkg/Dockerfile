@@ -1,6 +1,7 @@
 FROM ubuntu:16.04
  
 RUN apt-get update && apt-get install -y libcairo2 libffi6 python netcat-traditional
+RUN apt-get install --no-install-recommends -y netbase
 RUN mkdir -p /etc/graphite-metrictank
 RUN mkdir -p /var/lib/graphite
 COPY docker/gunicorn_conf.py /etc/graphite-metrictank
