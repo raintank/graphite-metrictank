@@ -39,7 +39,7 @@ mkdir -p ${BUILD_DIR}/usr/share/python
 virtualenv ${BUILD_DIR}/usr/share/python/graphite
 
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${REPO_PREFIX}/graphite-api.git
-${BUILD_DIR}/usr/share/python/graphite/bin/pip install gunicorn==18.0
+${BUILD_DIR}/usr/share/python/graphite/bin/pip install gunicorn==19.6
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${SOURCEDIR}
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install eventlet
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install git+https://github.com/woodsaj/pystatsd.git
