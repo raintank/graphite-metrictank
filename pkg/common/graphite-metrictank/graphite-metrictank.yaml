@@ -20,6 +20,10 @@ logging:
       handlers:
         - raw
       level: DEBUG
+    flask.app:
+      handlers:
+        - raw
+      level: DEBUG
 raintank:
   cache_ttl: 60
   tank:

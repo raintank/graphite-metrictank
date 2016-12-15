@@ -21,4 +21,4 @@ done
 
 export GRAPHITE_API_CONFIG=${GRAPHITE_API_CONFIG:-/etc/graphite-metrictank/graphite-metrictank.yaml}
 
-exec /usr/share/python/graphite/bin/python /usr/share/python/graphite/bin/gunicorn graphite_api.app:app -c /etc/graphite-metrictank/gunicorn_conf.py $@
+exec /usr/share/python/graphite/bin/twist web --notracebacks --wsgi=graphite_api.app.app -p ${GRAPHITE_BIND:-8080} -l ${GRAPHITE_LOG_PATH:-/var/log/graphite/access.log} $@

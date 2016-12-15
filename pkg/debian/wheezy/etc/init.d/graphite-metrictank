@@ -17,8 +17,8 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 DESC="Graphite-API"
 NAME=graphite-metrictank
-DAEMON=/usr/share/python/graphite/bin/gunicorn
-DAEMON_ARGS="graphite_api.app:app -c /etc/graphite-metrictank/gunicorn_conf.py"
+DAEMON=/usr/share/python/graphite/bin/twist
+DAEMON_ARGS="web --notracebacks --wsgi=graphite_api.app.app"
 DAEMON_USER=graphite
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
@@ -36,6 +36,8 @@ chown $DAEMON_USER /var/log/graphite
 if [ ! -z $GRAPHITE_API_CONFIG ]; then
   export GRAPHITE_API_CONFIG
 fi
+
+DAEMON_ARGS="$DAEMON_ARGS -p ${GRAPHITE_BIND:-8080} -l ${GRAPHITE_LOG_PATH:-/var/log/graphite/access.log}"
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
