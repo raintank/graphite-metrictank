@@ -10,6 +10,13 @@ logger = structlog.get_logger('graphite_api')
 import json
 import hashlib
 import platform
+from werkzeug.exceptions import HTTPException
+
+
+class MetrictankException(HTTPException):
+    def __init__(self, code=500, description="Metrictank Error"):
+        super(MetrictankException, self).__init__(description=description, response=None)
+        self.code = code
 
 class NullStatsd():
     def __enter__(self):
@@ -119,21 +126,29 @@ class RaintankFinder(object):
         }
         url = "%smetrics/find" % self.config['tank']['url']
         with statsd.timer("graphite-api.%s.find.query_duration" % hostname):
-            resp = self.http_session.get(url, params=params, headers=headers)
+            try:
+                resp = self.http_session.get(url, params=params, headers=headers)
+            except Exception as e:
+                logger.error("find_nodes", url=url, error=e.message)
+                raise MetrictankException(code=503, description="metric-tank service unavailable")
 
         logger.debug('find_nodes', url=url, status_code=resp.status_code, body=resp.text)
+        if resp.status_code >= 500:
+            logger.error("find_nodes", url=url, status_code=resp.status_code, body=resp.text)
+            if resp.status_code == 500:
+                raise MetrictankException(500, "metric-tank internal server error")
+            elif resp.status_code == 502:
+                raise MetrictankException(502, "metric-tank bad gateway")
+            elif resp.status_code == 503:
+                raise MetrictankException(503, "metric-tank service unavailable")
+            elif resp.status_code == 504:
+                raise MetrictankException(504, "metric-tank gateway timeout")
+            else:
+                raise MetrictankException(resp.status_code, resp.text)
 
-        if resp.status_code >= 400 and resp.status_code < 500:
-            raise Exception("bad request: %s" % resp.text)
-        if resp.status_code == 500:
-            raise Exception("metric-tank internal server error")
-        if resp.status_code == 502:
-            raise Exception("metric-tank bad gateway")
-        if resp.status_code == 503:
-            raise Exception("metric-tank service unavailable")
-        if resp.status_code == 504:
-            raise Exception("metric-tank gateway timeout")
-
+        if resp.status_code >= 400:
+            raise MetrictankException(resp.status_code, resp.text)
+        
         data = resp.json()
         if "metrics" not in data:
             raise Exception("invalid response from metrictank.")
@@ -168,18 +183,28 @@ class RaintankFinder(object):
                 'X-Org-Id': "%d" % g.org,
         }
         with statsd.timer("graphite-api.%s.fetch.raintank_query.query_duration" % hostname):
-            resp = self.http_session.post(url, data=params, headers=headers)
+            try:
+                resp = self.http_session.post(url, data=params, headers=headers)
+            except Exception as e:
+                logger.error("fetch_from_tank", url=url, error=e.message)
+                raise MetrictankException(code=503, description="metric-tank service unavailable")
+                
         logger.debug('fetch_from_tank', url=url, status_code=resp.status_code, body=resp.text)
-        if resp.status_code >= 400 and resp.status_code < 500:
-            raise Exception("metric-tank said: %s" % resp.text)
-        if resp.status_code == 500:
-            raise Exception("metric-tank internal server error")
-        if resp.status_code == 502:
-            raise Exception("metric-tank bad gateway")
-        if resp.status_code == 503:
-            raise Exception("metric-tank service unavailable")
-        if resp.status_code == 504:
-            raise Exception("metric-tank gateway timeout")
+        if resp.status_code >= 500:
+            logger.error("fetch_from_tank", url=url, status_code=resp.status_code, body=resp.text)
+            if resp.status_code == 500:
+                raise MetrictankException(500, "metric-tank internal server error")
+            elif resp.status_code == 502:
+                raise MetrictankException(502, "metric-tank bad gateway")
+            elif resp.status_code == 503:
+                raise MetrictankException(503, "metric-tank service unavailable")
+            elif resp.status_code == 504:
+                raise MetrictankException(504, "metric-tank gateway timeout")
+            else:
+                raise MetrictankException(resp.status_code, resp.text)
+
+        if resp.status_code >= 400:
+            raise MetrictankException(resp.status_code, resp.text)
 
         series = {}
         time_info = None
