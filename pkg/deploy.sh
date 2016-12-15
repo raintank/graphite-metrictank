@@ -13,5 +13,5 @@ package_cloud push ${PACKAGECLOUD_REPO}/debian/wheezy ${BUILD_ROOT}/pkg/debian/w
 package_cloud push ${PACKAGECLOUD_REPO}/debian/jessie ${BUILD_ROOT}/pkg/debian/jessie/*.deb
 package_cloud push ${PACKAGECLOUD_REPO}/ubuntu/trusty ${BUILD_ROOT}/pkg/ubuntu/trusty/*.deb
 package_cloud push ${PACKAGECLOUD_REPO}/ubuntu/xenial ${BUILD_ROOT}/pkg/ubuntu/xenial/*.deb
-package_cloud push ${PACKAGECLOUD_REPO}/el/6 ${BUILD_ROOT}/pkg/centos/6/*.rpm
-package_cloud push ${PACKAGECLOUD_REPO}/el/7 ${BUILD_ROOT}/pkg/centos/7/*.rpm
+#package_cloud push ${PACKAGECLOUD_REPO}/el/6 ${BUILD_ROOT}/pkg/centos/6/*.rpm
+#package_cloud push ${PACKAGECLOUD_REPO}/el/7 ${BUILD_ROOT}/pkg/centos/7/*.rpm

@@ -91,6 +91,8 @@ fpm \
   --license 'Apache 2.0' \
   -p ${PACKAGE_NAME} .
 
+
+exit
 # centos 6
 
 BUILD="${BUILD_ROOT}/centos/6"
