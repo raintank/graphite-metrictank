@@ -116,8 +116,8 @@ class RaintankFinder(object):
             pattern = query.pattern.replace("litmus", "worldping", 1)
 
         params = {
-            "query": pattern, 
-            "from": query.startTime, 
+            "query": pattern,
+            "from": query.startTime,
             "until": query.endTime,
             "format": "completer",
         }
@@ -171,7 +171,7 @@ class RaintankFinder(object):
         if maxDataPoints is not None:
             params['maxDataPoints'] = maxDataPoints
         pathMap = {}
-        for node in nodes:     
+        for node in nodes:
             target = node.reader.path
             if node.consolidateBy is not None:
                 target = "consolidateBy(%s,%s)" %(node.reader.path, node.consolidateBy)
@@ -222,6 +222,6 @@ class RaintankFinder(object):
                             step = end_time-start_time
                         else:
                             step = result["datapoints"][1][1] - result["datapoints"][0][1]
-                        time_info = (first, last, step)
+                        time_info = (first, last+step, step)
 
         return time_info, series
