@@ -28,6 +28,7 @@ fpm \
   --url https://github.com/raintank/graphite-metrictank \
   --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
+  --replaces graphite-raintank \
   -p ${PACKAGE_NAME} .
 
 # ubuntu 14.04
@@ -49,6 +50,7 @@ fpm \
   --url https://github.com/raintank/graphite-metrictank \
   --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
+  --replaces graphite-raintank \
   -p ${PACKAGE_NAME} .
 
 # ubuntu 16.04
@@ -69,6 +71,7 @@ fpm \
   --url https://github.com/raintank/graphite-metrictank \
   --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
+  --replaces graphite-raintank \
   -p ${PACKAGE_NAME} .
 
 # debian jessie
@@ -89,6 +92,7 @@ fpm \
   --url https://github.com/raintank/graphite-metrictank \
   --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
+  --replaces graphite-raintank \
   -p ${PACKAGE_NAME} .
 
 
@@ -110,6 +114,7 @@ fpm \
   --url https://github.com/raintank/graphite-metrictank \
   --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
+  --replaces graphite-raintank \
   -p ${PACKAGE_NAME} .
 
 # centos 7
@@ -128,4 +133,5 @@ fpm \
   --url https://github.com/raintank/graphite-metrictank \
   --description 'finder plugin to use metrictank with graphite-api' \
   --license 'Apache 2.0' \
+  --replaces graphite-raintank \
   -p ${PACKAGE_NAME} .
