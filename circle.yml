@@ -7,7 +7,7 @@ dependencies:
     - pkg/depends.sh
     - pkg/build_all.sh "debian:wheezy debian:jessie"
     - pkg/build_all.sh "ubuntu:trusty ubuntu:xenial"
-    #- pkg/build_all.sh "centos:6 centos:7"
+    - pkg/build_all.sh "centos:6 centos:7"
     - pkg/build_docker.sh
 general:
   artifacts:
