@@ -6,7 +6,7 @@ Type=simple
 User=graphite
 Group=nogroup
 EnvironmentFile=/etc/default/graphite-metrictank
-ExecStart=/usr/share/python/graphite/bin/twist web --notracebacks --wsgi=graphite_api.app.app -p 8080 -l /var/log/graphite/access.log
+ExecStart=/usr/share/python/graphite/bin/graphite_metrictank -p 8080 -l /var/log/graphite/access.log
 Restart=always
 
 [Install]

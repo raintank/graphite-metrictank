@@ -10,7 +10,7 @@ build_target()
 {
 	DISTRO=$1
 	VERSION=$2
-	docker run --rm -v $SOURCEDIR:/opt/graphite-raintank $DISTRO:$VERSION /opt/graphite-raintank/pkg/build.sh $DISTRO $VERSION
+	docker run --rm -v $SOURCEDIR:/opt/graphite-metrictank $DISTRO:$VERSION /opt/graphite-metrictank/pkg/build.sh $DISTRO $VERSION
 }
 
 for target in $TARGETS; do

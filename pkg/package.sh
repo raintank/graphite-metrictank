@@ -47,7 +47,6 @@ if [ -d $BUILD ]; then
     --config-files /etc/default/graphite-metrictank \
     --after-install ${DIR}/ubuntu/scripts/post-install.sh \
     -d libcairo2 \
-    -d python \
     -d "libffi5 | libffi6" \
     --url https://github.com/raintank/graphite-metrictank \
     --description 'finder plugin to use metrictank with graphite-api' \
@@ -69,7 +68,6 @@ if [ -d $BUILD ]; then
     --config-files /etc/default/graphite-metrictank \
     --after-install ${DIR}/ubuntu/scripts/post-install.sh \
     -d libcairo2 \
-    -d python \
     -d "libffi5 | libffi6" \
     --url https://github.com/raintank/graphite-metrictank \
     --description 'finder plugin to use metrictank with graphite-api' \
@@ -92,7 +90,6 @@ if [ -d $BUILD ]; then
     --config-files /etc/default/graphite-metrictank \
     --after-install ${DIR}/ubuntu/scripts/post-install.sh \
     -d libcairo2 \
-    -d python \
     -d "libffi5 | libffi6" \
     --url https://github.com/raintank/graphite-metrictank \
     --description 'finder plugin to use metrictank with graphite-api' \
