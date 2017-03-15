@@ -44,6 +44,7 @@ ${BUILD_DIR}/usr/share/python/graphite/bin/pip install ${SOURCEDIR}
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install statsd
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install Flask-Cache
 ${BUILD_DIR}/usr/share/python/graphite/bin/pip install blist
+${BUILD_DIR}/usr/share/python/graphite/bin/pip install msgpack-python
 
 find ${BUILD_DIR} ! -perm -a+r -exec chmod a+r {} \;
 

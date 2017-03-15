@@ -27,6 +27,7 @@ setup(
         'requests',
         'elasticsearch',
         'flask',
-        'graphite_api'
+        'graphite_api',
+        'msgpack'
     ),
 )
