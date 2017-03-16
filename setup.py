@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='graphite_metrictank',
-    version='0.4',
+    version='0.5',
     url='https://github.com/raintank/graphite_metrictank',
     license='apache2',
     author='Anthony Woods',
@@ -25,9 +25,9 @@ setup(
     ),
     install_requires=(
         'requests',
-        'elasticsearch',
         'flask',
         'graphite_api',
         'msgpack'
     ),
+    scripts=['bin/graphite_metrictank'],
 )

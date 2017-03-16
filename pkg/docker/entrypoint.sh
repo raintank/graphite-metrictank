@@ -21,4 +21,4 @@ done
 
 export GRAPHITE_API_CONFIG=${GRAPHITE_API_CONFIG:-/etc/graphite-metrictank/graphite-metrictank.yaml}
 
-exec /usr/share/python/graphite/bin/twist web --notracebacks --wsgi=graphite_api.app.app -p ${GRAPHITE_BIND:-8080} -l ${GRAPHITE_LOG_PATH:-/var/log/graphite/access.log} $@
+exec /usr/share/python/graphite/bin/twist web --notracebacks --wsgi=graphite_api.app.app -p ${GRAPHITE_BIND:-"tcp:port=8080"} -l ${GRAPHITE_LOG_PATH:-/var/log/graphite/access.log} $@

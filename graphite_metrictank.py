@@ -1,13 +1,10 @@
-import re
 import time
-import struct
 import requests
 from graphite_api.intervals import Interval, IntervalSet
 from graphite_api.node import LeafNode, BranchNode
 from flask import g
 import structlog
 logger = structlog.get_logger('graphite_api')
-import hashlib
 import platform
 from werkzeug.exceptions import HTTPException
 import msgpack

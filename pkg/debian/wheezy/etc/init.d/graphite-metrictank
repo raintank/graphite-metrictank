@@ -17,8 +17,8 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 DESC="Graphite-API"
 NAME=graphite-metrictank
-DAEMON=/usr/share/python/graphite/bin/twist
-DAEMON_ARGS="web --notracebacks --wsgi=graphite_api.app.app"
+DAEMON=/usr/share/python/graphite/bin/graphite_metrictank
+DAEMON_ARGS=""
 DAEMON_USER=graphite
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
