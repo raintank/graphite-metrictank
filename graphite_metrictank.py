@@ -7,7 +7,7 @@ from graphite_api.node import LeafNode, BranchNode
 from flask import g
 import structlog
 logger = structlog.get_logger('graphite_api')
-import json
+import simplejson as json
 import hashlib
 import platform
 from werkzeug.exceptions import HTTPException
