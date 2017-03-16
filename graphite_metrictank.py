@@ -1,17 +1,13 @@
-import re
 import time
-import struct
 import requests
 from graphite_api.intervals import Interval, IntervalSet
 from graphite_api.node import LeafNode, BranchNode
 from flask import g
 import structlog
 logger = structlog.get_logger('graphite_api')
-import simplejson as json
-import hashlib
 import platform
 from werkzeug.exceptions import HTTPException
-
+import msgpack
 
 class MetrictankException(HTTPException):
     def __init__(self, code=500, description="Metrictank Error"):
@@ -166,7 +162,7 @@ class RaintankFinder(object):
                 yield BranchNode(path)
 
     def fetch_multi(self, nodes, start_time, end_time):
-        params = {"target": [], "from": start_time, "to": end_time}
+        params = {"target": [], "from": start_time, "to": end_time, "format": "msgp"}
         maxDataPoints = g.get('maxDataPoints', None)
         if maxDataPoints is not None:
             params['maxDataPoints'] = maxDataPoints
@@ -209,19 +205,16 @@ class RaintankFinder(object):
         series = {}
         time_info = None
         with statsd.timer("graphite-api.%s.fetch.unmarshal_raintank_resp.duration" % hostname):
-            for result in resp.json():
-                path = pathMap[result["target"]]
-                series[path] = [p[0] for p in result["datapoints"]]
+            for result in msgpack.unpackb(resp.content):
+                path = pathMap[result["Target"]]
+                series[path] = [p["Val"] for p in result["Datapoints"]]
                 if time_info is None:
-                    if len(result["datapoints"]) == 0:
-                        time_info = (start_time, end_time, end_time-start_time)
+                    if len(result["Datapoints"]) == 0:
+                        time_info = (start_time, end_time, result["Interval"])
                     else:
-                        first = result["datapoints"][0][1]
-                        last = result["datapoints"][-1][1]
-                        if len(result["datapoints"]) == 1:
-                            step = end_time-start_time
-                        else:
-                            step = result["datapoints"][1][1] - result["datapoints"][0][1]
+                        first = result["Datapoints"][0]["Ts"]
+                        last = result["Datapoints"][-1]["Ts"]
+                        step = result["Interval"]
                         time_info = (first, last+step, step)
 
         return time_info, series

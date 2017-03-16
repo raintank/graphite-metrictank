@@ -51,8 +51,7 @@ mkdir -p /usr/share/python
 /usr/share/python/graphite/bin/pip install statsd
 /usr/share/python/graphite/bin/pip install Flask-Cache
 /usr/share/python/graphite/bin/pip install gevent
-#/usr/share/python/graphite/bin/pip install blist
-
+/usr/share/python/graphite/bin/pip install msgpack-python
 
 mkdir -p ${BUILD_DIR}/usr/share/python/
 cp -a /usr/share/python/graphite ${BUILD_DIR}/usr/share/python/
