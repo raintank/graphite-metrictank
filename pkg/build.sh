@@ -31,8 +31,6 @@ if [ ! -d ${TMP}/pypy-5.6-linux_x86_64-portable ]; then
 	tar -C ${TMP} -jxf ${TMP}/pypy-5.6-linux_x86_64-portable.tar.bz2
 fi
 
-$SUDO pip install virtualenv virtualenv-tools
-
 # remove any existing BUILD_DIR
 rm -rf ${BUILD_DIR}
 cp -a ${TMP}/pypy-5.6-linux_x86_64-portable /usr/share/pypy
