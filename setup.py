@@ -27,7 +27,7 @@ setup(
         'requests',
         'flask',
         'graphite_api',
-        'msgpack'
+        'msgpack-python'
     ),
     scripts=['bin/graphite_metrictank'],
 )
