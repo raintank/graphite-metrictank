@@ -21,9 +21,9 @@ mkdir -p $TMP
 ## ensure we have build dependencies installed.
 if [ $DISTRO == "ubuntu" ] || [ $DISTRO == "debian" ]; then
 	$SUDO apt-get update
-	$SUDO apt-get -y install build-essential libffi-dev libcairo2-dev git
+	$SUDO apt-get -y install build-essential libffi-dev libcairo2-dev git wget
 else
-	$SUDO yum -y install gcc gcc-c++ make openssl-devel libffi-devel cairo-devel git
+	$SUDO yum -y install gcc gcc-c++ make openssl-devel libffi-devel cairo-devel git wget
 fi
 
 if [ ! -d ${TMP}/pypy-5.6-linux_x86_64-portable ]; then
