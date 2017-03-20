@@ -8,6 +8,7 @@ logger = structlog.get_logger('graphite_api')
 import platform
 from werkzeug.exceptions import HTTPException
 import msgpack
+import math
 
 class MetrictankException(HTTPException):
     def __init__(self, code=500, description="Metrictank Error"):
@@ -207,7 +208,7 @@ class RaintankFinder(object):
         with statsd.timer("graphite-api.%s.fetch.unmarshal_raintank_resp.duration" % hostname):
             for result in msgpack.unpackb(resp.content):
                 path = pathMap[result["Target"]]
-                series[path] = [p["Val"] for p in result["Datapoints"]]
+                series[path] = [p["Val"] if not math.isnan(p["Val"]) else None for p in result["Datapoints"]]
                 if time_info is None:
                     if len(result["Datapoints"]) == 0:
                         time_info = (start_time, end_time, result["Interval"])
