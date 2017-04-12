@@ -175,7 +175,7 @@ class RaintankFinder(object):
             params['target'].append(target)
             pathMap[target] = node.path
 
-        url = "%srender" % self.config['tank']['url']
+        url = "%sget" % self.config['tank']['url']
         headers = {
                 'X-Org-Id': "%d" % g.org,
         }
