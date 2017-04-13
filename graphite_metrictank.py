@@ -170,8 +170,6 @@ class RaintankFinder(object):
         pathMap = {}
         for node in nodes:
             target = node.reader.path
-            if node.consolidateBy is not None:
-                target = "consolidateBy(%s,%s)" %(node.reader.path, node.consolidateBy)
             params['target'].append(target)
             pathMap[target] = node.path
 
